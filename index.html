@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.4</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.2</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1458,7 +1458,6 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-secondary" onclick="driveSave(true)">שמור ל-Drive עכשיו</button>
                 <button class="btn btn-secondary" onclick="driveLoad(true)">טען מ-Drive</button>
-                <button class="btn btn-ghost" onclick="driveOpenFile()">פתח ב-Drive</button>
                 <button class="btn btn-ghost" onclick="driveDisconnect()">נתק</button>
               </div>
               <div id="drive-sync-log" style="margin-top:12px;font-size:12px;color:var(--text-muted);"></div>
@@ -3315,32 +3314,18 @@ function getDriveConfig() {
 
 function driveAutoReconnect() {
   var cfg = getDriveConfig();
-  if (!cfg.clientId) return;
+  if (!cfg.clientId || !cfg.token) return;
+  driveToken = cfg.token;
   driveFileId = cfg.fileId || null;
   initDriveTokenClient(cfg.clientId);
   driveShowConnected(cfg.email || '');
-  // Always get a fresh token silently (no popup)
-  driveTokenClient.requestAccessToken({ prompt: '' });
-  // After token refresh, load data
-  var origCallback = driveTokenClient.callback;
-  driveTokenClient.callback = function(resp) {
-    if (resp.error) {
-      // Silent refresh failed - user needs to reconnect manually
-      console.warn('Drive silent refresh failed:', resp.error);
-      return;
-    }
-    driveToken = resp.access_token;
-    var c = getDriveConfig(); c.token = driveToken;
-    localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
-    driveLoad(false);
-    driveTokenClient.callback = origCallback;
-  };
+  driveLoad(false);
 }
 
 function initDriveTokenClient(clientId) {
   driveTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive',
+    scope: 'https://www.googleapis.com/auth/drive.file',
     callback: function(resp) {
       if (resp.error) return;
       driveToken = resp.access_token;
@@ -3473,11 +3458,7 @@ function driveSave(manual) {
     var status = document.getElementById('drive-status');
     if (log) log.textContent = 'נשמר ב-Drive · ' + time;
     if (status) status.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--sage)"><circle cx="12" cy="12" r="10"/></svg>&nbsp;Drive · ' + time;
-    if (manual) {
-      showToast('נשמר ב-Google Drive');
-      var cfg = getDriveConfig();
-      if (cfg.fileId) { var log = document.getElementById('drive-sync-log'); if(log) log.innerHTML = 'נשמר · <a href="https://drive.google.com/file/d/' + cfg.fileId + '/view" target="_blank" style="color:var(--sage)">צפה בקובץ ב-Drive</a>'; }
-    }
+    if (manual) showToast('נשמר ב-Google Drive');
   }).catch(function(e) {
     console.warn('Drive save error:', e);
     if (manual) showToast('שגיאה בשמירה ל-Drive', 'error');
@@ -3539,16 +3520,6 @@ loadSettingsForm = function() {
   if (el && cfg.clientId) el.value = cfg.clientId;
   if (cfg.token) driveShowConnected(cfg.email || '');
 };
-
-function driveOpenFile() {
-  var cfg = getDriveConfig();
-  if (cfg.fileId) {
-    window.open('https://drive.google.com/file/d/' + cfg.fileId + '/view', '_blank');
-  } else {
-    // Search in Drive
-    window.open('https://drive.google.com/drive/search?q=serene-data.json', '_blank');
-  }
-}
 
 </script>
 </body>
