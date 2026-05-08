@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.1</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.2</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3392,25 +3392,54 @@ function driveDisconnect() {
 
 function driveFindOrCreateFile() {
   if (!driveToken) return Promise.resolve();
-  return fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'" + DRIVE_FILE_NAME + "'+and+trashed%3Dfalse&fields=files(id,name)", {
+  var cfg = getDriveConfig();
+  // If we already have a stored fileId, verify it still exists
+  if (cfg.fileId) {
+    return fetch('https://www.googleapis.com/drive/v3/files/' + cfg.fileId + '?fields=id,name,trashed', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(file) {
+      if (file && !file.trashed) {
+        driveFileId = file.id;
+        return Promise.resolve();
+      }
+      // File gone — create new
+      return driveCreateFile();
+    }).catch(function() { return driveCreateFile(); });
+  }
+  // Search for existing file by name
+  var query = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q=' + query + '&fields=files(id,name)', {
     headers: { Authorization: 'Bearer ' + driveToken }
   }).then(function(r) { return r.json(); })
   .then(function(result) {
     if (result.files && result.files.length > 0) {
       driveFileId = result.files[0].id;
+      var c = getDriveConfig(); c.fileId = driveFileId;
+      localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
       return Promise.resolve();
     }
-    return fetch('https://www.googleapis.com/drive/v3/files', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })
-    }).then(function(r) { return r.json(); })
-    .then(function(file) { driveFileId = file.id; });
-  }).then(function() {
+    return driveCreateFile();
+  }).catch(function(e) { console.warn('Drive find error:', e); return driveCreateFile(); });
+}
+
+function driveCreateFile() {
+  return fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: DRIVE_FILE_NAME,
+      mimeType: 'application/json',
+      description: 'Serene Practice Manager - patient data backup'
+    })
+  }).then(function(r) { return r.json(); })
+  .then(function(file) {
+    driveFileId = file.id;
     var cfg = getDriveConfig();
     cfg.fileId = driveFileId;
     localStorage.setItem(DRIVE_KEY, JSON.stringify(cfg));
-  }).catch(function(e) { console.warn('Drive find/create:', e); });
+    console.log('Created Drive file:', driveFileId);
+  }).catch(function(e) { console.warn('Drive create error:', e); });
 }
 
 function driveSave(manual) {
@@ -3418,11 +3447,11 @@ function driveSave(manual) {
   var p = driveFileId ? Promise.resolve() : driveFindOrCreateFile();
   return p.then(function() {
     if (!driveFileId) return;
-    return fetch('https://www.googleapis.com/upload/drive/v3/files/' + driveFileId + '?uploadType=media', {
+    return fetch('https://www.googleapis.com/upload/drive/v3/files/' + driveFileId + '?uploadType=media&fields=id,name', {
       method: 'PATCH',
       headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({ clients: store.clients, appointments: store.appointments, notes: store.notes, payments: store.payments, nextId: store.nextId, settings: settings, savedAt: new Date().toISOString() })
-    });
+    }).then(function(r) { if (!r.ok) { r.text().then(function(t) { console.warn('Drive save failed:', t); }); } return r; });
   }).then(function() {
     var time = new Date().toLocaleTimeString('he-IL');
     var log = document.getElementById('drive-sync-log');
