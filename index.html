@@ -1,0 +1,3497 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סריין — ניהול מרפאה</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ee;
+    --surface: #faf8f5;
+    --surface2: #f0ece6;
+    --border: #e2dbd2;
+    --text: #2a2420;
+    --text-muted: #8a7f76;
+    --accent: #7c6d5e;
+    --accent2: #a8956e;
+    --sage: #7a8c78;
+    --sage-light: #edf0ec;
+    --rose: #c4846a;
+    --rose-light: #f7ede8;
+    --gold: #c9a96e;
+    --gold-light: #f7f0e4;
+    --danger: #b85c5c;
+    --danger-light: #f7ecec;
+    --shadow: 0 2px 12px rgba(42,36,32,0.08);
+    --shadow-lg: 0 8px 32px rgba(42,36,32,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--text);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    padding: 28px 24px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .logo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .nav { padding: 16px 0; flex: 1; }
+  .nav-label {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    padding: 12px 24px 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 24px;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13.5px;
+    font-weight: 400;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.07);
+    border-left-color: var(--gold);
+  }
+  .nav-item svg { opacity: 0.7; flex-shrink: 0; }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .therapist-info { display: flex; align-items: center; gap: 10px; }
+  .therapist-avatar {
+    width: 34px; height: 34px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .therapist-name { font-size: 12.5px; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .therapist-role { font-size: 11px; color: rgba(255,255,255,0.3); }
+
+  /* MAIN */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--text); color: #fff; }
+  .btn-primary:hover { background: #3d3530; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid #e8c0c0; }
+  .btn-danger:hover { background: #f0d5d5; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+  .content { padding: 28px 32px; }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* DASHBOARD */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.sage::before { background: var(--sage); }
+  .stat-card.rose::before { background: var(--rose); }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-card.accent::before { background: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; line-height: 1; margin-bottom: 4px; }
+  .stat-sub { font-size: 12px; color: var(--text-muted); }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  /* APPOINTMENT ROWS */
+  .appt-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .appt-row:last-child { border-bottom: none; }
+  .appt-row:hover { background: var(--surface2); }
+  .appt-time {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    min-width: 52px;
+    color: var(--accent);
+  }
+  .appt-info { flex: 1; }
+  .appt-name { font-weight: 500; font-size: 13.5px; }
+  .appt-type { font-size: 12px; color: var(--text-muted); }
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-paid { background: var(--sage-light); color: var(--sage); }
+  .badge-unpaid { background: var(--rose-light); color: var(--rose); }
+  .badge-pending { background: var(--gold-light); color: #9a7a3a; }
+  .badge-confirmed { background: var(--sage-light); color: var(--sage); }
+  .badge-active { background: var(--sage-light); color: var(--sage); }
+  .badge-break { background: var(--gold-light); color: #9a7a3a; }
+  .badge-finished { background: var(--surface2); color: var(--text-muted); }
+  .badge-archived { background: #f0ece6; color: #aaa; }
+  .client-card.archived { opacity: 0.55; }
+  .badge-cancelled { background: var(--surface2); color: var(--text-muted); }
+
+  /* CLIENT LIST */
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .client-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .client-card:hover { border-color: var(--accent2); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .client-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .client-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .client-card-name { font-weight: 500; font-size: 14.5px; }
+  .client-card-since { font-size: 11.5px; color: var(--text-muted); }
+  .client-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .client-stat-label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .client-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; line-height: 1.2; }
+
+  /* SEARCH BAR */
+  .search-bar {
+    display: flex; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    gap: 8px;
+    min-width: 220px;
+  }
+  .search-bar input {
+    border: none; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; color: var(--text);
+    outline: none; width: 100%;
+  }
+  .search-bar input::placeholder { color: var(--text-muted); }
+
+  /* CALENDAR */
+  .cal-tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-sm); padding: 3px; }
+  .cal-tab {
+    padding: 6px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; color: var(--text-muted); border: none; background: transparent;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .cal-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  .week-grid {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .week-day-header {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    font-weight: 500;
+    border-right: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .week-day-header.today { color: var(--sage); background: var(--sage-light); }
+  .week-day-header span { display: block; font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; margin-top: 2px; }
+  .time-label {
+    font-size: 10.5px; color: var(--text-muted);
+    padding: 0 8px; text-align: right;
+    height: 50px; display: flex; align-items: flex-start;
+    padding-top: 4px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .time-slot {
+    min-height: 50px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+  }
+  .time-slot:hover { background: var(--sage-light); }
+  .cal-event {
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+  .cal-event.sage { background: var(--sage-light); color: var(--sage); border-left: 3px solid var(--sage); }
+  .cal-event.rose { background: var(--rose-light); color: var(--rose); border-left: 3px solid var(--rose); }
+  .cal-event.gold { background: var(--gold-light); color: #9a7a3a; border-left: 3px solid var(--gold); }
+  .cal-event.cancelled { background: var(--surface2) !important; color: var(--text-muted) !important; border-right: 3px solid var(--border) !important; border-left: 3px solid var(--border) !important; text-decoration: line-through; opacity: 0.65; }
+
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .month-day-header {
+    padding: 10px; text-align: center;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 1px; text-transform: uppercase;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .month-cell {
+    min-height: 90px; padding: 8px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .month-cell:hover { background: var(--surface2); }
+  .month-cell.other-month .day-num { color: var(--border); }
+  .month-cell.today .day-num { background: var(--sage); color: #fff; }
+  .day-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 17px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 4px;
+  }
+  .month-event {
+    font-size: 10.5px; padding: 2px 5px; border-radius: 3px; margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .agenda-item {
+    display: flex; gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .agenda-date-col { min-width: 80px; }
+  .agenda-date { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; }
+  .agenda-dow { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .agenda-appts { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .agenda-appt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.1s;
+  }
+  .agenda-appt:hover { border-color: var(--accent2); background: var(--surface2); }
+  .agenda-time { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--accent); min-width: 48px; }
+
+  /* SESSION NOTES */
+  .notes-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 180px); }
+  .notes-sidebar {
+    border: 1px solid var(--border);
+    border-radius: var(--radius) 0 0 var(--radius);
+    background: var(--surface);
+    overflow-y: auto;
+  }
+  .notes-main {
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: var(--surface);
+    display: flex; flex-direction: column;
+  }
+  .notes-list-item {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .notes-list-item:hover { background: var(--surface2); }
+  .notes-list-item.active { background: var(--gold-light); border-left: 3px solid var(--gold); }
+  .notes-list-item.active .notes-client { color: var(--text); }
+  .notes-client { font-weight: 500; font-size: 13px; }
+  .notes-date { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .notes-preview { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .notes-editor-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .notes-editor-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400;
+  }
+  .notes-editor-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .notes-editor-body { padding: 20px 24px; flex: 1; }
+  .notes-textarea {
+    width: 100%; height: 100%; min-height: 340px;
+    border: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text); line-height: 1.7;
+    background: transparent; resize: none;
+  }
+  .notes-mood-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .mood-chip {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11.5px; border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.12s; background: var(--surface2);
+  }
+  .mood-chip.selected { background: var(--sage-light); border-color: var(--sage); color: var(--sage); }
+  .notes-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tag {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted);
+  }
+
+  /* PAYMENTS */
+  .payments-layout { display: flex; flex-direction: column; gap: 20px; }
+  .payments-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pay-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .pay-card-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .pay-card-amount { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; line-height: 1; }
+  .pay-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .pay-card.outstanding .pay-card-amount { color: var(--rose); }
+  .pay-card.collected .pay-card-amount { color: var(--sage); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; padding: 10px 16px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-muted); font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  tbody tr { transition: background 0.1s; cursor: pointer; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(42,36,32,0.45); z-index: 999;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); width: 520px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 20px; line-height: 1;
+    padding: 4px; transition: color 0.1s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  .form-control {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--bg); font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-control:focus { border-color: var(--accent2); }
+  select.form-control { cursor: pointer; }
+  textarea.form-control { resize: vertical; min-height: 80px; }
+
+  /* COLOR CHIPS FOR CLIENT AVATAR */
+  .c0 { background: #e8e0f5; color: #6b5e9e; }
+  .c1 { background: var(--sage-light); color: var(--sage); }
+  .c2 { background: var(--rose-light); color: var(--rose); }
+  .c3 { background: var(--gold-light); color: #9a7a3a; }
+  .c4 { background: #e0edf5; color: #5e7e9a; }
+  .c5 { background: #f5e8e0; color: #9a6e5e; }
+
+  /* CLIENT DETAIL */
+  .client-detail-header {
+    display: flex; align-items: center; gap: 18px;
+    padding-bottom: 20px; margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .client-detail-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500;
+  }
+  .client-detail-tabs {
+    display: flex; gap: 2px; background: var(--surface2);
+    border-radius: var(--radius-sm); padding: 3px;
+    margin-bottom: 20px;
+  }
+  .client-detail-tab {
+    padding: 7px 16px; border-radius: 6px; font-size: 13px;
+    cursor: pointer; color: var(--text-muted); border: none;
+    background: transparent; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .client-detail-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  .empty-state {
+    text-align: center; padding: 48px 24px; color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--text); margin-bottom: 6px; }
+  .empty-text { font-size: 13px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* RTL overrides */
+  [dir="rtl"] .sidebar { left: auto; right: 0; }
+  [dir="rtl"] .main { margin-left: 0; margin-right: 220px; }
+  [dir="rtl"] .nav-item { border-left: none; border-right: 2px solid transparent; }
+  [dir="rtl"] .nav-item.active { border-right-color: var(--gold); border-left-color: transparent; }
+  [dir="rtl"] .stat-card::before { }
+  [dir="rtl"] .notes-layout { direction: rtl; }
+  [dir="rtl"] .notes-sidebar { border-radius: 0 var(--radius) var(--radius) 0; }
+  [dir="rtl"] .notes-main { border-left: 1px solid var(--border); border-right: none; border-radius: var(--radius) 0 0 var(--radius); }
+  [dir="rtl"] .notes-list-item.active { border-left: none; border-right: 3px solid var(--gold); }
+  [dir="rtl"] .cal-event { border-left: none; border-right: 3px solid; }
+  [dir="rtl"] .cal-event.sage { border-right-color: var(--sage); }
+  [dir="rtl"] .cal-event.rose { border-right-color: var(--rose); }
+  [dir="rtl"] .cal-event.gold { border-right-color: var(--gold); }
+  [dir="rtl"] table { direction: rtl; }
+  [dir="rtl"] thead th { text-align: right; }
+  [dir="rtl"] .form-control { direction: rtl; text-align: right; }
+  [dir="rtl"] input[type="date"], [dir="rtl"] input[type="time"], [dir="rtl"] input[type="number"], [dir="rtl"] input[type="tel"], [dir="rtl"] input[type="email"], [dir="rtl"] input[type="url"] { direction: ltr; text-align: left; }
+  [dir="rtl"] .modal-footer { flex-direction: row-reverse; justify-content: flex-start; }
+  [dir="rtl"] .card-header { flex-direction: row-reverse; }
+  [dir="rtl"] .topbar { flex-direction: row-reverse; }
+  [dir="rtl"] .topbar-actions { flex-direction: row-reverse; }
+  [dir="rtl"] .appt-row { flex-direction: row-reverse; }
+  [dir="rtl"] .client-card-header { flex-direction: row-reverse; }
+  [dir="rtl"] .therapist-info { flex-direction: row-reverse; }
+  [dir="rtl"] .search-bar { flex-direction: row-reverse; }
+  [dir="rtl"] .search-bar input { text-align: right; }
+  [dir="rtl"] .badge { }
+  [dir="rtl"] .btn { flex-direction: row-reverse; }
+  [dir="rtl"] .client-detail-header { flex-direction: row-reverse; }
+  [dir="rtl"] .agenda-item { flex-direction: row-reverse; }
+  [dir="rtl"] .agenda-appt { flex-direction: row-reverse; }
+  [dir="rtl"] .pay-card-label { text-align: right; }
+  [dir="rtl"] .pay-card-amount { text-align: right; }
+  [dir="rtl"] .payments-layout .card-header { flex-direction: row-reverse; }
+  [dir="rtl"] .cal-tabs { flex-direction: row-reverse; }
+  [dir="rtl"] #calTitle { direction: rtl; }
+  [dir="rtl"] .week-grid { direction: rtl; }
+  [dir="rtl"] .month-grid { direction: rtl; }
+  [dir="rtl"] .week-day-header { }
+  [dir="rtl"] .notes-editor-header .flex { flex-direction: row-reverse; }
+  [dir="rtl"] .client-detail-tabs { flex-direction: row-reverse; }
+  [dir="rtl"] .logo { direction: rtl; }
+  [dir="rtl"] .nav-item { flex-direction: row-reverse; justify-content: flex-end; }
+  [dir="rtl"] .nav-label { text-align: right; padding-right: 24px; }
+  [dir="rtl"] .sidebar-footer button { flex-direction: row-reverse; text-align: right; }
+  [dir="rtl"] .form-group label { text-align: right; display: block; }
+  [dir="rtl"] .stat-label { text-align: right; }
+  [dir="rtl"] .client-stat-label { text-align: right; }
+  [dir="rtl"] .client-stat-val { text-align: right; }
+  [dir="rtl"] .agenda-date-col { text-align: right; }
+  [dir="rtl"] .pay-card-sub { text-align: right; }
+  [dir="rtl"] .stat-sub { text-align: right; }
+  [dir="rtl"] .month-cell { text-align: right; }
+  .text-muted { color: var(--text-muted); }
+  .mt-2 { margin-top: 8px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .justify-between { justify-content: space-between; }
+
+  /* ===== MOBILE BOTTOM NAV ===== */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 62px;
+    background: var(--text);
+    z-index: 300;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 2px;
+    safe-area-inset-bottom: env(safe-area-inset-bottom);
+  }
+  .mobile-nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; color: rgba(255,255,255,0.4);
+    cursor: pointer; padding: 6px 8px; border-radius: 8px;
+    transition: all 0.15s; flex: 1; min-width: 0;
+    border: none; background: none;
+  }
+  .mobile-nav-item.active { color: var(--gold); }
+  .mobile-nav-item span { font-size: 9.5px; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+
+  /* ===== HAMBURGER ===== */
+  .hamburger {
+    display: none;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); padding: 8px; border-radius: 8px;
+    transition: background 0.15s; align-items: center; justify-content: center;
+    order: -1;
+  }
+  .hamburger:active { background: var(--surface2); }
+
+  /* ===== SIDEBAR OVERLAY ===== */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(42,36,32,0.55);
+    z-index: 250;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ===== TABLET (768px – 1024px) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .payments-summary { grid-template-columns: repeat(3, 1fr); }
+    .client-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ===== MOBILE (≤768px) ===== */
+  @media (max-width: 768px) {
+    /* Sidebar: slide off-screen to the right (since RTL puts it on the right) */
+    .sidebar {
+      position: fixed !important;
+      top: 0; right: 0; bottom: 0;
+      left: auto !important;
+      width: 260px;
+      transform: translateX(110%);
+      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      z-index: 260;
+    }
+    .sidebar.mobile-open {
+      transform: translateX(0);
+    }
+
+    /* Main: full width, no margin */
+    .main {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      width: 100%;
+    }
+
+    /* Show mobile nav + hamburger */
+    .mobile-nav { display: flex; }
+    .hamburger { display: flex; }
+
+    /* Content padding */
+    .content { padding: 14px 14px 80px 14px; }
+
+    /* Topbar */
+    .topbar { padding: 0 12px; height: 54px; gap: 8px; }
+    .page-title { font-size: 19px; flex: 1; }
+    .topbar-actions { gap: 6px; }
+    .topbar-actions .search-bar { display: none; }
+
+    /* Stats 2-col */
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-value { font-size: 26px; }
+    .stat-card { padding: 14px 16px; }
+
+    /* Dashboard stacked */
+    .dashboard-grid { grid-template-columns: 1fr; gap: 12px; }
+
+    /* Clients 1-col */
+    .client-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Payments stacked */
+    .payments-summary { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Notes stacked */
+    .notes-layout {
+      grid-template-columns: 1fr !important;
+      min-height: unset;
+    }
+    .notes-sidebar {
+      border-radius: var(--radius) !important;
+      border: 1px solid var(--border) !important;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .notes-main {
+      border-radius: var(--radius) !important;
+      border: 1px solid var(--border) !important;
+      border-top: 1px solid var(--border) !important;
+      margin-top: 10px;
+      min-height: 300px;
+    }
+
+    /* Calendar simplified */
+    .week-grid { font-size: 10.5px; overflow-x: auto; display: block; }
+    .week-day-header { padding: 5px 2px; font-size: 9.5px; }
+    .week-day-header span { font-size: 14px; }
+    .time-label { font-size: 9px; padding: 0 3px; min-width: 36px; }
+    .time-slot { height: 40px; }
+    .cal-event { font-size: 9px; padding: 1px 3px; }
+
+    /* Cal nav row */
+    #calTitle { font-size: 13px; min-width: 100px; }
+    .cal-tabs { gap: 1px; }
+    .cal-tab { padding: 5px 9px; font-size: 11.5px; }
+
+    /* Forms */
+    .form-row { grid-template-columns: 1fr; }
+    .modal {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      max-height: 92vh;
+    }
+    .modal-overlay { align-items: flex-end; }
+
+    /* Tables scroll */
+    table { min-width: 420px; }
+    .card > div { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Client detail */
+    .client-detail-header { flex-wrap: wrap; }
+    .client-detail-tabs { flex-wrap: wrap; gap: 3px; }
+    .client-detail-tab { font-size: 12px; padding: 6px 10px; }
+
+    /* Settings max-width */
+    .view > div[style*="max-width"] { max-width: 100% !important; }
+
+    /* Calendar view top row */
+    #view-calendar > .flex { flex-wrap: wrap; gap: 8px; }
+  }
+
+  /* ===== SMALL PHONES (≤420px) ===== */
+  @media (max-width: 420px) {
+    .content { padding: 10px 10px 80px 10px; }
+    .stat-value { font-size: 22px; }
+    .stat-label { font-size: 9px; letter-spacing: 0.8px; }
+    .page-title { font-size: 17px; }
+    .pay-card-amount { font-size: 26px; }
+    .mobile-nav-item span { font-size: 8.5px; }
+  }
+
+
+  /* iCal dialog mobile fix */
+  @media (max-width: 768px) {
+    #ical-dialog {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 80px !important;
+      left: 12px !important;
+      right: 12px !important;
+      width: auto !important;
+      min-width: unset !important;
+      max-width: 100% !important;
+      border-radius: var(--radius) !important;
+    }
+  }
+
+
+  /* LABELS */
+  .label-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); cursor: default;
+  }
+  .label-tag.colored { background: var(--gold-light); border-color: #e8d9b8; color: #9a7a3a; }
+  .label-input-wrap {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 6px 10px; background: var(--bg); min-height: 40px; cursor: text;
+  }
+  .label-input-wrap:focus-within { border-color: var(--accent2); }
+  .label-input-wrap input {
+    border: none; outline: none; background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+    color: var(--text); min-width: 80px; flex: 1;
+  }
+  .label-remove {
+    cursor: pointer; opacity: 0.5; font-size: 13px; line-height: 1;
+    background: none; border: none; color: inherit; padding: 0;
+  }
+  .label-remove:hover { opacity: 1; }
+
+
+  /* Missing note indicator */
+  .no-note-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--rose-light); color: var(--rose);
+    border: 1px solid #e8c0b0; border-radius: 4px;
+    padding: 2px 7px; font-size: 11.5px; font-weight: 600;
+    white-space: nowrap;
+  }
+
+
+  .label-suggestions {
+    position: absolute; top: 100%; right: 0; left: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow);
+    z-index: 999; max-height: 160px; overflow-y: auto;
+    margin-top: 2px;
+  }
+  .label-suggestion-item {
+    padding: 8px 12px; font-size: 13px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .label-suggestion-item:hover { background: var(--sage-light); color: var(--sage); }
+
+</style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard', null); setMobileNav('dashboard')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>בקרה</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-clients" onclick="showView('clients', null); setMobileNav('clients')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    <span>מטופלים</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-calendar" onclick="showView('calendar', null); setMobileNav('calendar')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>לו"ז</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-notes" onclick="showView('notes', null); setMobileNav('notes')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>רשומות</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-payments" onclick="showView('payments', null); setMobileNav('payments')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <span>תשלומים</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-settings" onclick="showView('settings', null); setMobileNav('settings')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>הגדרות</span>
+  </div>
+</nav>
+
+<aside class="sidebar" id="mainSidebar">
+  <div class="logo">
+    <div class="logo-name">Serene</div>
+    <div class="logo-sub">ניהול מרפאה</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.1</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">סביבת עבודה</div>
+    <div class="nav-item active" onclick="showView('dashboard', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      לוח בקרה
+    </div>
+    <div class="nav-item" onclick="showView('clients', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      מטופלים
+    </div>
+    <div class="nav-item" onclick="showView('calendar', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      לוח שנה
+    </div>
+    <div class="nav-item" onclick="showView('notes', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      רשומות טיפול
+    </div>
+    <div class="nav-item" onclick="showView('payments', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      תשלומים
+    </div>
+    <div class="nav-label" style="margin-top:8px;">חשבון</div>
+    <div class="nav-item" onclick="showView('settings', this)">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      הגדרות
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="therapist-info" style="margin-bottom:14px;">
+      <div class="therapist-avatar" id="sidebarInitials">Dr</div>
+      <div>
+        <div class="therapist-name" id="sidebarName">ד"ר השם שלך</div>
+        <div class="therapist-role" id="sidebarRole">פסיכותרפיסט</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <button onclick="exportData()" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:7px 10px;color:rgba(255,255,255,0.6);font-size:11.5px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;width:100%;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.9)'" onmouseout="this.style.background='rgba(255,255,255,0.07)';this.style.color='rgba(255,255,255,0.6)'">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ייצוא גיבוי
+      </button>
+      <button onclick="importData()" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:7px 10px;color:rgba(255,255,255,0.6);font-size:11.5px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;width:100%;" onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='rgba(255,255,255,0.9)'" onmouseout="this.style.background='rgba(255,255,255,0.07)';this.style.color='rgba(255,255,255,0.6)'">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        ייבוא גיבוי
+      </button>
+      <button onclick="clearAllData()" style="display:flex;align-items:center;gap:7px;background:transparent;border:none;padding:5px 10px;color:rgba(255,255,255,0.25);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;width:100%;text-align:left;" onmouseover="this.style.color='rgba(200,100,100,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+        מחק את כל הנתונים
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="תפריט">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="page-title" id="pageTitle">לוח בקרה</div>
+    <div id="drive-status" style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;"></div>
+    <div class="topbar-actions" id="topbarActions">
+      <div class="search-bar">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="חיפוש…" id="globalSearch" oninput="handleSearch(this.value)">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addClient')" id="primaryAction">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        מטופל חדש
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card sage">
+          <div class="stat-label">מטופלים פעילים</div>
+          <div class="stat-value" id="stat-clients">0</div>
+          <div class="stat-sub">סך הרשומים</div>
+        </div>
+        <div class="stat-card rose">
+          <div class="stat-label">טיפולים החודש</div>
+          <div class="stat-value" id="stat-טיפולs">0</div>
+          <div class="stat-sub">פגישות</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">יתרה לגבייה</div>
+          <div class="stat-value" id="stat-outstanding">₪0</div>
+          <div class="stat-sub">חשבוניות שלא שולמו</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-label">הכנסה חודשית</div>
+          <div class="stat-value" id="stat-revenue">₪0</div>
+          <div class="stat-sub">נגבה החודש</div>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">פגישות היום</div>
+            <button class="btn btn-sm btn-ghost" onclick="showView('calendar', document.querySelector('.nav-item:nth-child(3)'))">הצג הכל</button>
+          </div>
+          <div id="today-appts"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">פעילות אחרונה</div>
+          </div>
+          <div id="recent-activity"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="view" id="view-clients">
+      <div id="clients-list-view">
+        <div class="client-grid" id="clientsGrid"></div>
+      </div>
+      <div id="client-detail-view" style="display:none;"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="view" id="view-calendar">
+      <div class="flex items-center justify-between" style="margin-bottom: 18px;">
+        <div class="cal-tabs" id="calTabs">
+          <button class="cal-tab active" onclick="switchCalView('week', this)">שבוע</button>
+          <button class="cal-tab" onclick="switchCalView('month', this)">חודש</button>
+          <button class="cal-tab" onclick="switchCalView('agenda', this)">סדר יום</button>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <span id="calTitle" style="font-family: 'Cormorant Garamond',serif; font-size:18px; min-width:180px; text-align:center;"></span>
+          <button class="btn btn-ghost btn-sm" onclick="calNav(1)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="btn btn-sm btn-secondary" onclick="calGoToday()">היום</button>
+          <select id="calLabelFilter" class="form-control" style="width:auto;font-size:12px;padding:5px 8px;" onchange="renderCalendar()">
+            <option value="">כל התוויות</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="position:relative;">
+            <button class="btn btn-ghost btn-sm" onclick="toggleIcalDialog()" id="ical-cal-btn">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              ייצוא .ics
+            </button>
+            <div id="ical-dialog" style="display:none;position:absolute;top:calc(100% + 8px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:16px;min-width:220px;z-index:99;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:8px;">טווח ייצוא</div>
+              <select class="form-control" id="ical-range-cal" style="margin-bottom:10px;">
+                <option value="upcoming">פגישות קרובות</option>
+                <option value="month">החודש הנוכחי</option>
+                <option value="3months">3 חודשים קדימה</option>
+                <option value="all">כל הפגישות</option>
+              </select>
+              <button class="btn btn-primary" style="width:100%;" onclick="exportIcalFrom('cal')">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                הורד קובץ .ics
+              </button>
+              <div style="margin-top:10px;font-size:11px;color:var(--text-muted);line-height:1.7;">
+                ייבא ב-Google Calendar:<br>הגדרות ⚙️ ← ייבוא וייצוא
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addAppt')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            פגישה חדשה
+          </button>
+        </div>
+      </div>
+      <div id="calendarContent"></div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="view" id="view-notes">
+      <div class="notes-layout">
+        <div class="notes-sidebar">
+          <div style="padding: 12px 14px; border-bottom: 1px solid var(--border);">
+            <div class="search-bar" style="min-width: auto;">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="חיפוש רשומות…" oninput="filterרשומות(this.value)">
+            </div>
+          </div>
+          <div id="notesList"></div>
+        </div>
+        <div class="notes-main" id="notesEditor">
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <div class="empty-title">לא נבחרה רשומה</div>
+            <div class="empty-text">Select a טיפול note or create a new one</div>
+            <button class="btn btn-primary mt-2" onclick="openModal('addNote')" style="margin: 16px auto 0; display:inline-flex;">רשומה חדשה</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="view" id="view-payments">
+      <div class="payments-layout">
+
+        <!-- Summary cards -->
+        <div class="payments-summary">
+          <div class="pay-card collected">
+            <div class="pay-card-label">סה״כ נגבה</div>
+            <div class="pay-card-amount" id="pay-collected">₪0</div>
+            <div class="pay-card-sub" id="pay-collected-count">מכלל המטופלים</div>
+          </div>
+          <div class="pay-card outstanding">
+            <div class="pay-card-label">יתרת חוב כוללת</div>
+            <div class="pay-card-amount" id="pay-outstanding">₪0</div>
+            <div class="pay-card-sub" id="pay-outstanding-count">טיפולים פחות תשלומים</div>
+          </div>
+          <div class="pay-card">
+            <div class="pay-card-label">הכנסה השנה</div>
+            <div class="pay-card-amount" id="pay-annual">₪0</div>
+            <div class="pay-card-sub">כלל התשלומים שהתקבלו</div>
+          </div>
+        </div>
+
+        <!-- Per-client balances -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">יתרות לפי מטופל</div>
+            <div class="flex gap-2" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" class="form-control btn-sm" id="payClientSearch" placeholder="חיפוש מטופל…" oninput="renderתשלומים()" style="width:140px;padding:5px 8px;">
+              <select class="form-control btn-sm" id="payLabelFilter" onchange="renderתשלומים()" style="width:auto;padding:5px 8px;">
+                <option value="">כל התוויות</option>
+              </select>
+              <select class="form-control btn-sm" id="payBalanceFilter" onchange="renderתשלומים()" style="width:auto;padding:5px 8px;">
+                <option value="debt" selected>חייבים בלבד</option>
+                <option value="all">כולם</option>
+                <option value="clear">מאוזנים</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>מטופל</th>
+                  <th>טיפולים</th>
+                  <th>יתרת חוב</th>
+                  <th>תשלום אחרון</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="balanceTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payment log -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">יומן תשלומים</div>
+            <div class="flex gap-2" style="flex-wrap:wrap;align-items:center;">
+              <input type="text" class="form-control btn-sm" id="payLogClientFilter" placeholder="חיפוש מטופל…" oninput="renderתשלומים()" style="width:130px;padding:5px 8px;">
+              <select class="form-control btn-sm" id="payLogRange" onchange="renderתשלומים()" style="width:auto;padding:5px 8px;">
+                <option value="1">חודש אחרון</option>
+                <option value="3">3 חודשים</option>
+                <option value="6">6 חודשים</option>
+                <option value="12">שנה אחרונה</option>
+                <option value="all">הכל</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('addPayment')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                קבלת תשלום
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>מטופל</th>
+                  <th>סכום</th>
+                  <th>הערה</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div style="max-width: 620px;">
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header"><div class="card-title">הפרופיל שלך</div></div>
+          <div style="padding: 20px;">
+            <div style="display:flex; align-items:center; gap:18px; margin-bottom:22px;">
+              <div id="settings-avatar-preview" style="width:60px;height:60px;border-radius:50%;background:var(--gold-light);color:#9a7a3a;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;flex-shrink:0;">Dr</div>
+              <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">שמך והתואר שלך מופיעים בסרגל הצד<br>ובמסמכים מיוצאים.</div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>שם פרטי</label>
+                <input class="form-control" id="s-firstName" placeholder="למשל: שרה">
+              </div>
+              <div class="form-group">
+                <label>שם משפחה</label>
+                <input class="form-control" id="s-lastName" placeholder="למשל: בן-דוד">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>תואר / אישורים</label>
+                <input class="form-control" id="s-title" placeholder="למשל: פסיכותרפיסט, M.S.W">
+              </div>
+              <div class="form-group">
+                <label>מספר רישיון (אופציונלי)</label>
+                <input class="form-control" id="s-license" placeholder="למשל: IL-12345">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>שם המרפאה (אופציונלי)</label>
+              <input class="form-control" id="s-clinic" placeholder="למשל: מרפאת מיינדספייס">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header"><div class="card-title">יצירת קשר ומיקום</div></div>
+          <div style="padding: 20px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>טלפון</label>
+                <input class="form-control" id="s-phone" type="tel" placeholder="+972 50 000 0000" style="direction:ltr;text-align:left;">
+              </div>
+              <div class="form-group">
+                <label>אימייל</label>
+                <input class="form-control" id="s-email" type="email" placeholder="you@email.com" style="direction:ltr;text-align:left;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>כתובת / עיר</label>
+              <input class="form-control" id="s-address" placeholder="למשל: תל אביב, ישראל">
+            </div>
+            <div class="form-group">
+              <label>אתר אינטרנט</label>
+              <input class="form-control" id="s-website" type="url" placeholder="https://www.example.com" style="direction:ltr;text-align:left;">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header"><div class="card-title">ברירות מחדל</div></div>
+          <div style="padding: 20px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>תעריף טיפול ברירת מחדל</label>
+                <input class="form-control" id="s-defaultFee" type="number" placeholder="350">
+              </div>
+              <div class="form-group">
+                <label>סמל מטבע</label>
+                <select class="form-control" id="s-currency">
+                  <option value="₪">₪ שקל ישראלי</option>
+                  <option value="$">$ דולר אמריקאי</option>
+                  <option value="€">€ אירו</option>
+                  <option value="£">£ לירה בריטית</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>משך טיפול ברירת מחדל</label>
+                <select class="form-control" id="s-duration">
+                  <option value="50">50 דקות</option>
+                  <option value="60">60 דקות</option>
+                  <option value="90">90 דקות</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>ימי עבודה</label>
+                <select class="form-control" id="s-workdays">
+                  <option value="sun-thu">ראשון – חמישי</option>
+                  <option value="mon-fri">שני – שישי</option>
+                  <option value="mon-sat">שני – שבת</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>שעת התחלת יום</label>
+                <input class="form-control" id="s-dayStart" type="time" value="08:00">
+              </div>
+              <div class="form-group">
+                <label>שעת סיום יום</label>
+                <input class="form-control" id="s-dayEnd" type="time" value="20:00">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="1.8"/></svg>
+              ייצוא ללוח שנה
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--text-muted);line-height:1.75;margin-bottom:18px;">
+              ייצא את הפגישות שלך כקובץ <strong>.ics</strong> — עובד עם Google Calendar, Apple Calendar ו-Outlook.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:8px;">טווח ייצוא</div>
+                <select class="form-control" id="ical-range" style="margin-bottom:10px;">
+                  <option value="upcoming">פגישות קרובות (מהיום)</option>
+                  <option value="month">החודש הנוכחי</option>
+                  <option value="3months">3 חודשים קדימה</option>
+                  <option value="all">כל הפגישות</option>
+                </select>
+                <button class="btn btn-primary" style="width:100%;" onclick="exportIcalFrom('settings')">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  הורד קובץ .ics
+                </button>
+              </div>
+              <div style="background:var(--sage-light);border:1px solid #c8d9c7;border-radius:var(--radius-sm);padding:14px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--sage);margin-bottom:8px;">איך לייבא ל-Google Calendar</div>
+                <div style="font-size:12px;color:var(--text);line-height:2;">
+                  1. לחץ "הורד קובץ .ics"<br>
+                  2. פתח <a href="https://calendar.google.com" target="_blank" style="color:var(--sage);font-weight:500;">calendar.google.com</a><br>
+                  3. הגדרות ⚙️ ← ייבוא וייצוא<br>
+                  4. בחר את הקובץ ← ייבא
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--gold-light);border:1px solid #e8d9b8;border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text-muted);line-height:1.7;">
+              <strong style="color:var(--text);">💡 טיפ:</strong> iPhone — לחץ פעמיים על הקובץ. Outlook: קובץ ← ייבא/ייצא.
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Google Drive — אחסון נתונים
+            </div>
+            <div id="drive-badge"></div>
+          </div>
+          <div style="padding:20px;">
+            <div id="drive-disconnected-ui">
+              <p style="font-size:13px;color:var(--text-muted);line-height:1.75;margin-bottom:16px;">
+                חבר את האפליקציה ל-Google Drive שלך כדי לשמור את כל הנתונים בענן.<br>
+                הנתונים יישמרו בקובץ <strong>serene-data.json</strong> בתיקיית Drive שלך.<br>
+                נדרש <strong>Client ID</strong> מ-Google Cloud Console.
+              </p>
+              <div class="form-group">
+                <label>Google Client ID</label>
+                <input class="form-control" id="s-drive-clientid" placeholder="123456789-abc...apps.googleusercontent.com" style="direction:ltr;text-align:left;">
+              </div>
+              <button class="btn btn-primary" onclick="driveConnect()" style="margin-top:4px;">התחבר ל-Google</button>
+              <details style="margin-top:20px;">
+                <summary style="cursor:pointer;font-size:12.5px;font-weight:500;color:var(--accent2);">איך מקבלים Client ID? (מדריך 5 דקות)</summary>
+                <div style="margin-top:12px;font-size:12.5px;color:var(--text-muted);line-height:1.9;background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border);">
+                  <strong style="color:var(--text);">שלב 1</strong> — עבור ל <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent2);">console.cloud.google.com</a><br>
+                  <strong style="color:var(--text);">שלב 2</strong> — צור פרויקט חדש<br>
+                  <strong style="color:var(--text);">שלב 3</strong> — APIs &amp; Services → Enable APIs → חפש Google Drive API → Enable<br>
+                  <strong style="color:var(--text);">שלב 4</strong> — Credentials → Create Credentials → OAuth client ID → Web application<br>
+                  <strong style="color:var(--text);">שלב 5</strong> — ב-Authorized JavaScript origins הוסף: <code style="background:var(--border);padding:1px 5px;border-radius:3px;">file://</code><br>
+                  <strong style="color:var(--text);">שלב 6</strong> — העתק Client ID → הדבק למעלה<br>
+                  <strong style="color:var(--text);">שלב 7</strong> — OAuth consent screen → הוסף אימייל כ-Test user
+                </div>
+              </details>
+            </div>
+            <div id="drive-connected-ui" style="display:none;">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div style="width:40px;height:40px;border-radius:50%;background:var(--sage-light);display:flex;align-items:center;justify-content:center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sage)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:500;font-size:13.5px;">מחובר ל-Google Drive</div>
+                  <div style="font-size:12px;color:var(--text-muted);" id="drive-connected-email"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="driveSave(true)">שמור ל-Drive עכשיו</button>
+                <button class="btn btn-secondary" onclick="driveLoad(true)">טען מ-Drive</button>
+                <button class="btn btn-ghost" onclick="driveDisconnect()">נתק</button>
+              </div>
+              <div id="drive-sync-log" style="margin-top:12px;font-size:12px;color:var(--text-muted);"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" onclick="exportSettings()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              ייצוא הגדרות
+            </button>
+            <button class="btn btn-ghost" onclick="importSettings()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              ייבוא הגדרות
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" onclick="loadSettingsForm()">איפוס</button>
+            <button class="btn btn-primary" onclick="saveSettings()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              שמור הגדרות
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
+
+  <!-- ADD CLIENT -->
+  <div class="modal" id="modal-addClient" style="display:none;">
+    <div class="modal-header">
+      <div class="modal-title">מטופל חדש</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>שם פרטי</label>
+          <input class="form-control" id="f-firstName" placeholder="שם פרטי">
+        </div>
+        <div class="form-group">
+          <label>שם משפחה</label>
+          <input class="form-control" id="f-lastName" placeholder="שם משפחה">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>טלפון</label>
+          <input class="form-control" id="f-phone" placeholder="+972 50…">
+        </div>
+        <div class="form-group">
+          <label>אימייל</label>
+          <input class="form-control" id="f-email" placeholder="אימייל@…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תאריך לידה</label>
+          <input class="form-control" id="f-dob" type="date">
+        </div>
+        <div class="form-group">
+          <label>מגדר</label>
+          <select class="form-control" id="f-gender">
+            <option value="">לא צוין</option>
+            <option value="m">זכר</option>
+            <option value="f">נקבה</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תעריף טיפול (₪)</label>
+          <input class="form-control" id="f-fee" type="number" placeholder="350">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>רשמים ראשוניים</label>
+        <textarea class="form-control" id="f-issue" placeholder="רשמים ראשוניים, נושאים לטיפול…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>מקור הפניה</label>
+        <input class="form-control" id="f-referral" placeholder="למשל: הפניה עצמית, רופא משפחה…">
+      </div>
+      <div class="form-group">
+        <label>תאריך תחילת טיפול</label>
+        <input class="form-control" id="f-since" type="date">
+      </div>
+      <div class="form-group">
+        <label>תוויות</label>
+        <div style="position:relative;">
+        <div class="label-input-wrap" id="f-labels-wrap" onclick="document.getElementById('f-label-input').focus()">
+          <div id="f-labels-container" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+          <input type="text" id="f-label-input" placeholder="הוסף תווית ולחץ Enter…" onkeydown="handleLabelInput(event,'f')" oninput="showLabelSuggestions(this,'f')" onblur="hideLabelSuggestions('f')" autocomplete="off">
+        </div>
+        <div id="f-label-suggestions" class="label-suggestions" style="display:none;"></div>
+        </div>
+        <input type="hidden" id="f-labels-data" value="[]">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>סטטוס</label>
+          <select class="form-control" id="f-status">
+            <option value="active">פעיל</option>
+            <option value="break">בהפסקה</option>
+            <option value="finished">סיים טיפול</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;padding-top:22px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
+            <input type="checkbox" id="f-archived" style="width:16px;height:16px;cursor:pointer;">
+            העבר לארכיון
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveClient()">שמור מטופל</button>
+    </div>
+  </div>
+
+
+  <!-- EDIT CLIENT -->
+  <div class="modal" id="modal-editClient" style="display:none;">
+    <div class="modal-header">
+      <div class="modal-title">עריכת מטופל</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ef-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>שם פרטי</label>
+          <input class="form-control" id="ef-firstName" placeholder="שם פרטי">
+        </div>
+        <div class="form-group">
+          <label>שם משפחה</label>
+          <input class="form-control" id="ef-lastName" placeholder="שם משפחה">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>טלפון</label>
+          <input class="form-control" id="ef-phone" placeholder="+972 50…">
+        </div>
+        <div class="form-group">
+          <label>אימייל</label>
+          <input class="form-control" id="ef-email" placeholder="אימייל@…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תאריך לידה</label>
+          <input class="form-control" id="ef-dob" type="date">
+        </div>
+        <div class="form-group">
+          <label>מגדר</label>
+          <select class="form-control" id="ef-gender">
+            <option value="">לא צוין</option>
+            <option value="m">זכר</option>
+            <option value="f">נקבה</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תעריף טיפול (₪)</label>
+          <input class="form-control" id="ef-fee" type="number" placeholder="350">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>רשמים ראשוניים</label>
+        <textarea class="form-control" id="ef-issue" placeholder="רשמים ראשוניים, נושאים לטיפול…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>מקור הפניה</label>
+        <input class="form-control" id="ef-referral" placeholder="למשל: הפניה עצמית, רופא משפחה…">
+      </div>
+      <div class="form-group">
+        <label>תאריך תחילת טיפול</label>
+        <input class="form-control" id="ef-since" type="date">
+      </div>
+      <div class="form-group">
+        <label>תוויות</label>
+        <div style="position:relative;">
+        <div class="label-input-wrap" id="ef-labels-wrap" onclick="document.getElementById('ef-label-input').focus()">
+          <div id="ef-labels-container" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+          <input type="text" id="ef-label-input" placeholder="הוסף תווית ולחץ Enter…" onkeydown="handleLabelInput(event,'ef')" oninput="showLabelSuggestions(this,'ef')" onblur="hideLabelSuggestions('ef')" autocomplete="off">
+        </div>
+        <div id="ef-label-suggestions" class="label-suggestions" style="display:none;"></div>
+        </div>
+        <input type="hidden" id="ef-labels-data" value="[]">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>סטטוס</label>
+          <select class="form-control" id="ef-status">
+            <option value="active">פעיל</option>
+            <option value="break">בהפסקה</option>
+            <option value="finished">סיים טיפול</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;padding-top:22px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
+            <input type="checkbox" id="ef-archived" style="width:16px;height:16px;cursor:pointer;">
+            העבר לארכיון
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveEditClient()">שמור שינויים</button>
+    </div>
+  </div>
+
+  <!-- ADD APPOINTMENT -->
+  <div class="modal" id="modal-addAppt" style="display:none;">
+    <div class="modal-header">
+      <div class="modal-title" id="appt-modal-title">פגישה חדשה</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="a-id" value="">
+      <div class="form-group">
+        <label>מטופל</label>
+        <select class="form-control" id="a-client"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תאריך</label>
+          <input class="form-control" id="a-date" type="date">
+        </div>
+        <div class="form-group">
+          <label>שעה</label>
+          <input class="form-control" id="a-time" type="time" value="10:00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>משך</label>
+          <select class="form-control" id="a-duration">
+            <option value="50">50 דקות</option>
+            <option value="60">60 דקות</option>
+            <option value="90">90 דקות</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>סוג</label>
+          <select class="form-control" id="a-type">
+            <option>טיפול פרטני</option>
+            <option>טיפול זוגי</option>
+            <option>פגישת היכרות</option>
+            <option>מעקב</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>סטטוס</label>
+        <select class="form-control" id="a-status">
+          <option value="confirmed">מאושר</option>
+          <option value="pending">ממתין</option>
+          <option value="cancelled">בוטל</option>
+        </select>
+      </div>
+      <div class="form-group" id="appt-session-note-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label style="margin-bottom:0;">רשומת טיפול</label>
+          <span id="appt-note-indicator" style="font-size:11px;"></span>
+        </div>
+        <textarea class="form-control" id="a-session-note" rows="5" placeholder="רשומת טיפול חופשית…" style="min-height:100px;"></textarea>
+
+      </div>
+      <div class="form-group">
+        <label>הערות פגישה (לוגיסטיות)</label>
+        <textarea class="form-control" id="a-notes" placeholder="הערות לוגיסטיות — ביטול, שינוי שעה…" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" id="appt-save-btn" onclick="saveAppointment()">שמור פגישה</button>
+    </div>
+  </div>
+
+  <!-- ADD NOTE -->
+  <div class="modal" id="modal-addNote" style="display:none;">
+    <div class="modal-header">
+      <div class="modal-title">New Session Note</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>מטופל</label>
+          <select class="form-control" id="n-client"></select>
+        </div>
+        <div class="form-group">
+          <label>תאריך טיפול</label>
+          <input class="form-control" id="n-date" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>תוכן הטיפול</label>
+        <textarea class="form-control" id="n-content" rows="6" placeholder="רשומת טיפול חופשית…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveNote()">שמור רשומה</button>
+    </div>
+  </div>
+
+  <!-- ADD PAYMENT -->
+  <div class="modal" id="modal-addPayment" style="display:none;">
+    <div class="modal-header">
+      <div class="modal-title">קבלת תשלום</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>מטופל</label>
+          <select class="form-control" id="p-client" onchange="updatePaymentHint()"></select>
+        </div>
+        <div class="form-group">
+          <label>תאריך קבלת תשלום</label>
+          <input class="form-control" id="p-date" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>סכום שהתקבל (₪)</label>
+        <input class="form-control" id="p-amount" type="number" placeholder="0">
+        <div id="p-balance-hint" style="font-size:12px;color:var(--text-muted);margin-top:5px;"></div>
+      </div>
+      <div class="form-group">
+        <label>הערה (אופציונלי)</label>
+        <input class="form-control" id="p-desc" placeholder="למשל: תשלום חודש מרץ, תשלום חלקי…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="savePayment()">שמור תשלום</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== DATA STORE =====
+const store = {
+  clients: [],
+  appointments: [],
+  notes: [],
+  payments: [],
+  nextId: 1
+};
+
+// Current state
+let currentView = 'dashboard';
+let currentModal = null;
+let calView = 'week';
+let calDate = new Date();
+let activeNoteId = null;
+
+// ===== SEED DATA =====
+function seed() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+
+  store.clients = [
+    { id: 1, firstName: 'מאיה', lastName: 'כהן', phone: '050-1234567', email: 'maya@email.com', dob: '1989-04-12', fee: 380, issue: 'חרדה ולחץ בעבודה', referral: 'הפניה עצמית', since: '2024-01-15', colorIdx: 1 },
+    { id: 2, firstName: 'דניאל', lastName: 'לוי', phone: '052-9876543', email: 'daniel@email.com', dob: '1983-09-22', fee: 350, issue: 'דיכאון, בעיות זוגיות', referral: 'הפניה מרופא משפחה', since: '2024-03-08', colorIdx: 3 },
+    { id: 3, firstName: 'שרה', lastName: 'גולדברג', phone: '054-5551234', email: 'sarah@email.com', dob: '1995-02-28', fee: 400, issue: 'PTSD, עיבוד טראומה', referral: 'Psychiatrist', since: '2023-11-20', colorIdx: 2 },
+    { id: 4, firstName: 'אבי', lastName: 'מזרחי', phone: '053-3334444', email: 'avi@email.com', dob: '1978-07-05', fee: 320, issue: 'מעברים בחיים, לחץ בקריירה', referral: 'Friend', since: '2024-06-01', colorIdx: 4 },
+  ];
+  store.nextId = 5;
+
+  const dates = [0, 0, 1, 2, 3, 5, 7, 7, 8].map(d => {
+    const dt = new Date(y, m, now.getDate() - 3 + d);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  });
+
+  store.appointments = [
+    { id: 1, clientId: 1, date: dates[0], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+    { id: 2, clientId: 3, date: dates[1], time: '14:00', duration: 60, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+    { id: 3, clientId: 2, date: dates[2], time: '11:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+    { id: 4, clientId: 4, date: dates[3], time: '09:00', duration: 50, type: 'פגישת היכרות', status: 'confirmed', notes: '' },
+    { id: 5, clientId: 1, date: dates[4], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+    { id: 6, clientId: 3, date: dates[5], time: '15:00', duration: 60, type: 'טיפול פרטני', status: 'pending', notes: '' },
+    { id: 7, clientId: 2, date: dates[6], time: '11:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+    { id: 8, clientId: 4, date: dates[7], time: '16:00', duration: 50, type: 'מעקב', status: 'confirmed', notes: '' },
+    { id: 9, clientId: 1, date: dates[8], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
+  ];
+
+  store.notes = [
+    { id: 1, clientId: 1, date: dates[0], content: "Maya presented with heightened anxiety around performance reviews at work. Explored underlying perfectionism patterns. Used CBT reframing exercise — she responded well. Mood lifted toward טיפול end.", mood: "חרד → מלא תקווה", goals: "Practice 5-4-3-2-1 grounding exercise daily. Journal automatic thoughts before next טיפול." },
+    { id: 2, clientId: 3, date: dates[1], content: "שרה עשתה התקדמות משמעותית בדיון על האירוע הטראומטי מבלי לדיסוציאציה. שמרה על עיגון לאורך כל הפגישה. נסקרו תרגילי הכנה ל-EMDR.", mood: "מוגן → נוכח", goals: "Continue bilateral stimulation exercises. Identify safe place imagery for next EMDR טיפול." },
+    { id: 3, clientId: 2, date: dates[2], content: "דניאל חקר תחושות של חוסר ערך בזוגיות. הקשר לדפוסי התקשרות מוקדמים עם האב. הביע אמביוולנטיות לגבי טיפול זוגי. תובנה טובה היום.", mood: "שטוח → הרהורי", goals: "להביא דוגמה אחת לדיבור עצמי שלילי לשיתוף בשבוע הבא." },
+  ];
+
+  store.payments = [
+    { id: 1, clientId: 1, date: dates[0], amount: 380, status: 'paid', description: 'טיפול פרטני #8' },
+    { id: 2, clientId: 3, date: dates[1], amount: 400, status: 'paid', description: 'טיפול פרטני #15' },
+    { id: 3, clientId: 2, date: dates[2], amount: 350, status: 'unpaid', description: 'טיפול פרטני #6' },
+    { id: 4, clientId: 4, date: dates[3], amount: 320, status: 'paid', description: 'פגישת היכרות' },
+    { id: 5, clientId: 1, date: dates[4], amount: 380, status: 'paid', description: 'טיפול פרטני #9' },
+    { id: 6, clientId: 3, date: dates[5], amount: 400, status: 'pending', description: 'טיפול פרטני #16' },
+    { id: 7, clientId: 2, date: dates[6], amount: 350, status: 'unpaid', description: 'טיפול פרטני #7' },
+  ];
+}
+
+// ===== HELPERS =====
+function getClient(id) { return store.clients.find(c => c.id === id); }
+function clientName(id) { const c = getClient(id); return c ? [c.firstName, c.lastName].filter(Boolean).join(' ') : 'לא ידוע'; }
+function initials(c) { const parts = [c.firstName, c.lastName].filter(Boolean); return parts.map(p => p[0]).join('').toUpperCase() || '?'; }
+function colorClass(c) { return `c${c.colorIdx || 0}`; }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function todayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+
+// ===== VIEW SWITCHING =====
+function showView(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  currentView = name;
+  const titles = { dashboard: 'לוח בקרה', clients: 'מטופלים', calendar: 'לוח שנה', notes: 'רשומות טיפול', payments: 'תשלומים', settings: 'הגדרות' };
+  document.getElementById('pageTitle').textContent = titles[name];
+  const actions = {
+    dashboard: `<div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="חיפוש…" id="globalSearch" oninput="handleSearch(this.value)"></div><button class="btn btn-primary" onclick="openModal('addClient')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> מטופל חדש</button>`,
+    clients: `<div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="חיפוש מטופלים…" id="globalSearch" oninput="filterClients(this.value)"></div><button class="btn btn-primary" onclick="openModal('addClient')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> מטופל חדש</button>`,
+    calendar: `<button class="btn btn-primary" onclick="openModal('addAppt')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> פגישה חדשה</button>`,
+    notes: `<button class="btn btn-primary" onclick="openModal('addNote')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Note</button>`,
+    payments: ``,
+    settings: ``,
+  };
+  document.getElementById('topbarActions').innerHTML = actions[name];
+  renderView(name);
+}
+
+function renderView(name) {
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'clients') renderClients();
+  if (name === 'calendar') renderCalendar();
+  if (name === 'notes') renderרשומות();
+  if (name === 'payments') renderתשלומים();
+  if (name === 'settings') loadSettingsForm();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const today = todayStr();
+  const now = new Date();
+  const m = now.getMonth(), y = now.getFullYear();
+
+  document.getElementById('stat-clients').textContent = store.clients.filter(c => !c.archived).length;
+
+  const טיפולsThisMonth = store.appointments.filter(a => {
+    const d = new Date(a.date); return d.getMonth() === m && d.getFullYear() === y;
+  }).length;
+  document.getElementById('stat-טיפולs').textContent = טיפולsThisMonth;
+
+  const outstanding = store.clients.filter(c=>!c.archived).reduce((sum,c)=>{ const sessions=store.appointments.filter(a=>a.clientId===c.id).length; const owed=sessions*(c.fee||0); const paid=store.payments.filter(p=>p.clientId===c.id).reduce((s,p)=>s+(p.amount||0),0); return sum+Math.max(0,owed-paid); },0);
+  document.getElementById('stat-outstanding').textContent = '₪' + outstanding.toLocaleString();
+
+  const revenue = store.payments.filter(p => {
+    const d = new Date(p.date);
+    return d.getMonth() === m && d.getFullYear() === y;
+  }).reduce((s, p) => s + (p.amount||0), 0);
+  document.getElementById('stat-revenue').textContent = '₪' + revenue.toLocaleString();
+
+  const dashLbl2 = window._dashLabelFilter || '';
+  const todayAppts = store.appointments.filter(a => { if (a.date !== today) return false; if (dashLbl2) { const cl=getClient(a.clientId); if (!cl||!cl.labels||!cl.labels.includes(dashLbl2)) return false; } return true; }).sort((a, b) => a.time.localeCompare(b.time));
+  const dashLbl = window._dashLabelFilter || '';
+  const apptEl = document.getElementById('today-appts');
+  if (todayAppts.length === 0) {
+    apptEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">אין פגישות היום</div></div>';
+  } else {
+    apptEl.innerHTML = todayAppts.map(a => {
+      const c = getClient(a.clientId);
+      return `<div class="appt-row" onclick="openEditAppt(${a.id})" style="cursor:pointer;">
+        <div class="appt-time">${a.time}</div>
+        <div class="client-avatar ${c ? colorClass(c) : ''}" style="width:34px;height:34px;font-size:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${c ? initials(c) : '?'}</div>
+        <div class="appt-info"><div class="appt-name">${c ? clientName(a.clientId) : 'Unknown'}</div><div class="appt-type">${a.type} · ${a.duration} דק׳</div></div>
+        ${(!hasNote(a))?'<span class="no-note-badge">📝 ללא רשומה</span>':''}
+        <span class="badge badge-${a.status}">${{confirmed:'מאושר',pending:'ממתין',cancelled:'בוטל'}[a.status]||a.status}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const recent = [...store.appointments].sort((a,b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time)).slice(0, 6);
+  const actEl = document.getElementById('recent-activity');
+  actEl.innerHTML = recent.map(a => {
+    const c = getClient(a.clientId);
+    return `<div class="appt-row">
+      <div class="client-avatar ${c ? colorClass(c) : ''}" style="width:32px;height:32px;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${c ? initials(c) : '?'}</div>
+      <div class="appt-info"><div class="appt-name">${c ? clientName(a.clientId) : '?'}</div><div class="appt-type">${fmtDate(a.date)} · ${a.time}</div></div>
+      ${!hasNote(a) ? '<span class="no-note-badge">📝 ללא רשומה</span>' : ''}
+      <span class="badge badge-${a.status}">${{confirmed:'מאושר',pending:'ממתין',cancelled:'בוטל'}[a.status]||a.status}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== CLIENTS =====
+function renderClients(filter = '', showArchived = false) {
+  document.getElementById('client-detail-view').style.display = 'none';
+  document.getElementById('clients-list-view').style.display = 'block';
+
+  // Render filter bar
+  const listView = document.getElementById('clients-list-view');
+  let filterBar = document.getElementById('clients-filter-bar');
+  if (!filterBar) {
+    filterBar = document.createElement('div');
+    filterBar.id = 'clients-filter-bar';
+    filterBar.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;';
+    listView.insertBefore(filterBar, document.getElementById('clientsGrid'));
+  }
+  const allLabels = [...new Set(store.clients.flatMap(c => c.labels||[]))].sort();
+  const activeLabelFilter = window._activeLabelFilter || '';
+  var labelSelectHtml = '<select id="label-filter-select" class="form-control" style="width:auto;font-size:12px;padding:4px 8px;" onchange="window._activeLabelFilter=this.value;renderClients(\'\','+showArchived+')"><option value="">כל התוויות</option>';
+  allLabels.forEach(function(l) {
+    labelSelectHtml += '<option value="' + l + '"' + (activeLabelFilter===l?' selected':'') + '>' + l + '</option>';
+  });
+  labelSelectHtml += '</select>';
+  filterBar.innerHTML =
+    '<button class="cal-tab' + (!showArchived?' active':'') + '" onclick="renderClients(\'\',false)" style="font-size:12px;">פעילים</button>' +
+    '<button class="cal-tab' + (showArchived?' active':'') + '" onclick="renderClients(\'\',true)" style="font-size:12px;">ארכיון</button>' +
+    labelSelectHtml +
+    '<div style="flex:1"></div>' +
+    '<span style="font-size:12px;color:var(--text-muted);">' + store.clients.filter(function(c){return !c.archived;}).length + ' פעילים · ' + store.clients.filter(function(c){return c.archived;}).length + ' בארכיון</span>';
+
+  const grid = document.getElementById('clientsGrid');
+  const activeLbl = window._activeLabelFilter || '';
+  const clients = store.clients.filter(c => {
+    const nameMatch = [c.firstName, c.lastName].filter(Boolean).join(" ").toLowerCase().includes(filter.toLowerCase());
+    const archiveMatch = showArchived ? c.archived : !c.archived;
+    const labelMatch = !activeLbl || (c.labels && c.labels.includes(activeLbl));
+    return nameMatch && archiveMatch && labelMatch;
+  });
+  if (clients.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👤</div><div class="empty-title">אין מטופלים עדיין</div><div class="empty-text">הוסף את המטופל הראשון שלך כדי להתחיל</div></div>';
+    return;
+  }
+  grid.innerHTML = clients.map(c => {
+    const טיפולs = store.appointments.filter(a => a.clientId === c.id).length;
+    const sessions4card = store.appointments.filter(a=>a.clientId===c.id).length; const owed4card=sessions4card*(c.fee||0); const paid4card=store.payments.filter(p=>p.clientId===c.id).reduce((s,p)=>s+(p.amount||0),0); const outstanding=Math.max(0,owed4card-paid4card);
+    return `<div class="client-card${c.archived?' archived':''}" onclick="showClientDetail(${c.id})">
+      <div class="client-card-header">
+        <div class="client-avatar ${colorClass(c)}">${initials(c)}</div>
+        <div>
+          <div class="client-card-name">${[c.firstName, c.lastName].filter(Boolean).join(" ")}</div>
+          <div class="client-card-since">מאז ${fmtDate(c.since)}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.issue || ''}</div>
+      ${c.labels&&c.labels.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">'+c.labels.map(l=>'<span class="label-tag colored">'+l+'</span>').join('')+'</div>':''}
+      <div class="client-card-stats">
+        <div><div class="client-stat-label">טיפולים</div><div class="client-stat-val">${טיפולs}</div></div>
+        <div><div class="client-stat-label">לגבייה</div><div class="client-stat-val" style="${outstanding>0?'color:var(--rose)':''}">${outstanding>0?'₪'+outstanding:'—'}</div></div>
+        <div><div class="client-stat-label">תעריף</div><div class="client-stat-val">₪${c.fee}</div></div>
+        <div><div class="client-stat-label">סטטוס</div><div><span class="badge badge-${c.status||'active'}">${{active:'פעיל',break:'בהפסקה',finished:'סיים טיפול'}[c.status||'active'] || 'פעיל'}</span></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterClients(v) { renderClients(v); }
+
+function showClientDetail(id) {
+  const c = getClient(id);
+  if (!c) return;
+  document.getElementById('clients-list-view').style.display = 'none';
+  const det = document.getElementById('client-detail-view');
+  det.style.display = 'block';
+  const טיפולs = store.appointments.filter(a => a.clientId === id);
+  const payments = store.payments.filter(p => p.clientId === id);
+  const notes = store.notes.filter(n => n.clientId === id);
+  const sessionsCount = טיפולs.length;
+  const owed4det = sessionsCount * (c.fee||0);
+  const collected = payments.reduce((s,p)=>s+(p.amount||0),0);
+  const outstanding = Math.max(0, owed4det - collected);
+
+  det.innerHTML = `
+    <button class="btn btn-ghost btn-sm" onclick="renderClients()" style="margin-bottom:16px;">→ חזרה למטופלים</button>
+    <div class="client-detail-header">
+      <div class="client-detail-avatar ${colorClass(c)}">${initials(c)}</div>
+      <div style="flex:1">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;">${[c.firstName, c.lastName].filter(Boolean).join(" ")}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">${c.phone} · ${c.email}</div>
+        <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">מטופל מאז ${fmtDate(c.since)} · תעריף ₪${c.fee}/טיפול</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="openApptForClient(${id})">קביעת פגישה</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditClient(${id})">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          עריכה
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient(${id})">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          מחק מטופל
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="openPaymentForClient(${id})">הוסף תשלום</button>
+        <button class="btn btn-primary btn-sm" onclick="openNoteForClient(${id})">הוסף רשומה</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      ${[['טיפולים', טיפולs.length],['שולם','₪'+collected],['יתרת חוב',outstanding>0?'₪'+outstanding:'✓'],['רשומות',notes.length]].map(([l,v],i)=>`
+      <div class="stat-card ${['sage','gold','rose','accent'][i]}">
+        <div class="stat-label">${l}</div>
+        <div class="stat-value" style="font-size:28px;${i===2&&outstanding>0?'color:var(--rose)':''}">${v}</div>
+      </div>`).join('')}
+    </div>
+    <div class="client-detail-tabs">
+      <button class="client-detail-tab active" onclick="switchClientTab(this,'cd-overview-${id}')">סקירה</button>
+      <button class="client-detail-tab" onclick="switchClientTab(this,'cd-appointments-${id}')">פגישות</button>
+      <button class="client-detail-tab" onclick="switchClientTab(this,'cd-notes-${id}')">רשומות</button>
+      <button class="client-detail-tab" onclick="switchClientTab(this,'cd-payments-${id}')">תשלומים</button>
+    </div>
+    <div id="cd-overview-${id}">
+      <div class="card"><div class="card-header"><div class="card-title">פרטי מטופל</div></div>
+        <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;">
+          ${[['תאריך לידה',fmtDate(c.dob)],['מגדר',{m:'זכר',f:'נקבה'}[c.gender]||'לא צוין'],['תחילת טיפול',fmtDate(c.since)||'—'],['טלפון',c.phone],['אימייל',c.email],['תעריף טיפול','₪'+c.fee],['רשמים ראשוניים',c.issue||'—'],['הפניה',c.referral||'—'],['סטטוס',({active:'פעיל',break:'בהפסקה',finished:'סיים טיפול'})[c.status||'active']||'פעיל'],['תוויות',(c.labels&&c.labels.length)?c.labels.join(', '):'—'],['ארכיון',c.archived?'כן':'לא']].map(([l,v])=>`
+          <div><div style="font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:3px;">${l}</div><div style="font-size:13.5px;">${v}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div id="cd-appointments-${id}" style="display:none;">
+      <div class="card"><div style="overflow-x:auto;"><table><thead><tr><th>תאריך</th><th>שעה</th><th>סוג</th><th>משך</th><th>סטטוס</th><th></th></tr></thead>
+        <tbody>${טיפולs.sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{const noN=a.date<=todayStr()&&!hasNote(a);return`<tr><td>${fmtDate(a.date)}</td><td>${a.time}</td><td>${a.type}${noN?' <span style="font-size:10px;color:var(--rose);opacity:0.7;">● ללא רשומה</span>':''}</td><td>${a.duration} דק׳</td><td><span class="badge badge-${a.status}">${{confirmed:'מאושר',pending:'ממתין',cancelled:'בוטל'}[a.status]||a.status}</span></td><td><button class="btn btn-sm btn-ghost" onclick="openEditAppt(${a.id})">✏️ עריכה</button> <button class="btn btn-sm btn-danger" onclick="deleteAppt(${a.id})">מחק</button></td></tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">אין פגישות</td></tr>'}</tbody>
+      </table></div></div>
+    </div>
+    <div id="cd-notes-${id}" style="display:none;">
+      ${notes.length===0?'<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">אין רשומות עדיין</div></div>':
+      notes.sort((a,b)=>b.date.localeCompare(a.date)).map(n=>`
+      <div class="card" style="margin-bottom:14px;"><div class="card-header"><div class="card-title">${fmtDate(n.date)}</div></div>
+        <div style="padding:16px 20px;font-size:13.5px;line-height:1.7;color:var(--text);">${n.content}</div>
+
+      </div>`).join('')}
+    </div>
+    <div id="cd-payments-${id}" style="display:none;">
+      <div class="card"><div style="overflow-x:auto;"><table><thead><tr><th>תאריך</th><th>סכום</th><th>הערה</th><th></th></tr></thead>
+        <tbody>${payments.sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`<tr><td>${fmtDate(p.date)}</td><td>₪${p.amount}</td><td style='color:var(--text-muted);'>${p.description||''}</td><td><button class='btn btn-sm btn-danger' onclick='deletePayment(${p.id})'>מחק</button></td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">אין תשלומים</td></tr>'}</tbody>
+      </table></div></div>
+    </div>
+  `;
+}
+
+function switchClientTab(el, showId) {
+  const parent = el.closest('.client-detail-tabs');
+  parent.querySelectorAll('.client-detail-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const base = showId.split('-').slice(0,2).join('-') + '-';
+  document.querySelectorAll(`[id^="cd-"]`).forEach(d => { if(d.id.includes(showId.split('-').pop())) d.style.display = 'none'; });
+  // simpler approach: hide all tab content for this client
+  const cid = showId.split('-').pop();
+  ['overview','appointments','notes','payments'].forEach(t => {
+    const el = document.getElementById(`cd-${t}-${cid}`);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById(showId).style.display = 'block';
+}
+
+function openApptForClient(id) { openModal('addAppt'); setTimeout(()=>{ document.getElementById('a-client').value = id; }, 50); }
+function openNoteForClient(id) { openModal('addNote'); setTimeout(()=>{ document.getElementById('n-client').value = id; }, 50); }
+
+
+
+// ===== CALENDAR =====
+function switchCalView(v, el) {
+  calView = v;
+  document.querySelectorAll('.cal-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderCalendar();
+}
+
+function calNav(dir) {
+  if (calView === 'week') calDate.setDate(calDate.getDate() + dir * 7);
+  else if (calView === 'month') calDate.setMonth(calDate.getMonth() + dir);
+  else calDate.setDate(calDate.getDate() + dir * 14);
+  renderCalendar();
+}
+
+function calGoToday() { calDate = new Date(); renderCalendar(); }
+
+function renderCalendar() {
+  const el = document.getElementById('calendarContent');
+  // Populate label filter
+  const calLblSel = document.getElementById('calLabelFilter');
+  if (calLblSel) {
+    const allLabels = [...new Set(store.clients.flatMap(c => c.labels||[]))].sort();
+    const cur = calLblSel.value;
+    calLblSel.innerHTML = '<option value="">כל התוויות</option>' + allLabels.map(l=>`<option value="${l}"${cur===l?' selected':''}>${l}</option>`).join('');
+  }
+  if (calView === 'week') renderWeek(el);
+  else if (calView === 'month') renderMonth(el);
+  else renderAgenda(el);
+}
+
+function renderWeek(el) {
+  const d = new Date(calDate);
+  const weekStartsSun = !settings.workdays || settings.workdays === 'sun-thu';
+  const startOffset = weekStartsSun ? 0 : 1;
+  d.setDate(d.getDate() - ((d.getDay() - startOffset + 7) % 7));
+  const days = Array.from({length:7}, (_,i) => { const dd=new Date(d); dd.setDate(d.getDate()+i); return dd; });
+  const today = todayStr();
+  const weekStartsSun2 = !settings.workdays || settings.workdays === 'sun-thu';
+  const dowHe = weekStartsSun2 ? ["א'","ב'","ג'","ד'","ה'","ו'",'שבת'] : ["ב'","ג'","ד'","ה'","ו'",'שבת',"א'"];
+  const dayStartH = parseInt((settings.dayStart||'08:00').split(':')[0]);
+  const dayEndH = parseInt((settings.dayEnd||'20:00').split(':')[0]);
+  const hours = Array.from({length: dayEndH - dayStartH}, (_,i) => i + dayStartH);
+
+  document.getElementById('calTitle').textContent = `${days[0].toLocaleDateString('he-IL',{day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric'})}`;
+
+  let html = `<div style="overflow-y:auto;max-height:calc(100vh - 240px);">`;
+  html += `<div class="week-grid">`;
+  html += `<div class="week-day-header" style="background:var(--surface2);"></div>`;
+  days.forEach((d,i) => {
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    html += `<div class="week-day-header${ds===today?' today':''}"><span>${d.getDate()}</span>${dowHe[i]}</div>`;
+  });
+  hours.forEach(h => {
+    html += `<div class="time-label">${h}:00</div>`;
+    days.forEach(d => {
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const calLbl = document.getElementById('calLabelFilter') ? document.getElementById('calLabelFilter').value : '';
+      const appts = store.appointments.filter(a => { if (a.date !== ds || parseInt(a.time.split(':')[0]) !== h) return false; if (calLbl) { const cl=getClient(a.clientId); if (!cl||!cl.labels||!cl.labels.includes(calLbl)) return false; } return true; });
+      const colors = ['sage','rose','gold','c4','c5'];
+      html += `<div class="time-slot" onclick="quickAddAppt('${ds}','${h}:00')">`;
+      appts.forEach((a,i) => {
+        const c = getClient(a.clientId);
+        const isCancelled = a.status === 'cancelled';
+        const col = isCancelled ? 'cancelled' : colors[a.clientId % colors.length];
+        const noNoteW = !isCancelled && a.date <= today && !hasNote(a);
+        const name = c ? clientName(a.clientId) : '';
+        html += `<div class="cal-event ${col}" title="${name} ${a.time}${isCancelled?' · בוטל':''}${noNoteW?' · ללא רשומה':''}" onclick="event.stopPropagation();openEditAppt(${a.id})" style="cursor:pointer;"><span style="font-size:9px;opacity:0.7;">${a.time}</span> ${name}${isCancelled?' ✕':''}${noNoteW?' 📝':''}</div>`;
+      });
+      html += `</div>`;
+    });
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+function renderMonth(el) {
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('calTitle').textContent = calDate.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  const first = new Date(y,m,1);
+  const startDow = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const today = todayStr();
+  const dow2 = ["ב'","ג'","ד'","ה'","ו'",'שבת',"א'"];
+  const colors = ['sage','rose','gold'];
+
+  let html = `<div class="month-grid">`;
+  dow2.forEach(d => html += `<div class="month-day-header">${d}</div>`);
+  for (let i=0; i<startDow; i++) {
+    const prev = new Date(y,m,1-startDow+i);
+    html += `<div class="month-cell other-month"><div class="day-num">${prev.getDate()}</div></div>`;
+  }
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const calLblM = document.getElementById('calLabelFilter') ? document.getElementById('calLabelFilter').value : '';
+    const appts = store.appointments.filter(a => { if (a.date !== ds) return false; if (calLblM) { const cl=getClient(a.clientId); if (!cl||!cl.labels||!cl.labels.includes(calLblM)) return false; } return true; });
+    html += `<div class="month-cell${ds===today?' today':''}" onclick="quickAddAppt('${ds}','10:00')">`;
+    html += `<div class="day-num">${d}</div>`;
+    appts.slice(0,4).forEach((a,i) => {
+      const c = getClient(a.clientId);
+      const isCancelledM = a.status === 'cancelled';
+      const nameM = c ? clientName(a.clientId) : '';
+      const colM = isCancelledM ? '' : colors[i%3];
+      const styleM = isCancelledM
+        ? 'background:var(--surface2);color:var(--text-muted);text-decoration:line-through;opacity:0.6;cursor:pointer;'
+        : `background:var(--${colors[i%3]}-light);color:var(--${colors[i%3]});cursor:pointer;`;
+      html += `<div class="month-event" style="${styleM}" onclick="event.stopPropagation();openEditAppt(${a.id})">${a.time} ${nameM}${isCancelledM?' ✕':''}</div>`;
+    });
+    if (appts.length > 3) html += `<div style="font-size:10px;color:var(--text-muted)">+${appts.length-3} נוספות</div>`;
+    html += `</div>`;
+  }
+  const totalCells = startDow + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i=1; i<=remaining; i++) html += `<div class="month-cell other-month"><div class="day-num">${i}</div></div>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+var agendaShowPast = false;
+function renderAgenda(el, showPast) {
+  if (showPast !== undefined) agendaShowPast = showPast;
+  document.getElementById('calTitle').textContent = 'סדר יום';
+  const today = todayStr();
+  const tabsDiv = '<div style="display:flex;gap:6px;margin-bottom:14px;">'
+    + '<button class="cal-tab' + (!agendaShowPast?' active':'') + '" onclick="renderAgenda(document.getElementById(\'calendarContent\'),false)">פגישות קרובות</button>'
+    + '<button class="cal-tab' + (agendaShowPast?' active':'') + '" onclick="renderAgenda(document.getElementById(\'calendarContent\'),true)">פגישות עבר</button></div>';
+  const upcoming = agendaShowPast
+    ? store.appointments.filter(a => a.date < today).sort((a,b) => b.date.localeCompare(a.date)||b.time.localeCompare(a.time))
+    : store.appointments.filter(a => a.date >= today).sort((a,b) => a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  if (upcoming.length === 0) { el.innerHTML = tabsDiv + '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">' + (agendaShowPast?'אין פגישות עבר':'אין פגישות קרובות') + '</div></div>'; return; }
+  const byDate = {};
+  upcoming.forEach(a => { if(!byDate[a.date]) byDate[a.date]=[]; byDate[a.date].push(a); });
+  const colors = ['sage','rose','gold','accent'];
+  el.innerHTML = tabsDiv + Object.entries(byDate).map(([date, appts]) => {
+    const dt = new Date(date+'T00:00:00');
+    const dow = dt.toLocaleDateString('he-IL',{weekday:'long'});
+    return `<div class="agenda-item">
+      <div class="agenda-date-col"><div class="agenda-date">${dt.getDate()} ${dt.toLocaleDateString('en',{month:'short'})}</div><div class="agenda-dow">${dow}</div></div>
+      <div class="agenda-appts">${appts.map((a,i)=>{
+        const c=getClient(a.clientId);
+        return `<div class="agenda-appt" onclick="openEditAppt(${a.id})" style="cursor:pointer;">
+          <div style="width:4px;height:36px;border-radius:2px;background:var(--${colors[a.clientId%colors.length]});flex-shrink:0;"></div>
+          <div class="agenda-time">${a.time}</div>
+          <div style="flex:1"><div style="font-weight:500">${c?clientName(a.clientId):'?'}</div><div style="font-size:12px;color:var(--text-muted)">${a.type} · ${a.duration} דק׳${(a.date<=today&&!hasNote(a))?' · <span style=\"color:var(--rose);opacity:0.6;\">ללא רשומה</span>':''}</div></div>
+          <span class="badge badge-${a.status}">${{confirmed:'מאושר',pending:'ממתין',cancelled:'בוטל'}[a.status]||a.status}</span>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditAppt(${a.id})" style="opacity:0.6;padding:4px 8px;">✏️</button>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function quickAddAppt(date, time) {
+  openModal('addAppt');
+  setTimeout(() => {
+    document.getElementById('a-date').value = date;
+    document.getElementById('a-time').value = time;
+  }, 50);
+}
+
+// ===== NOTES =====
+function renderרשומות(filter='') {
+  const notes = store.notes.filter(n => {
+    const c = getClient(n.clientId);
+    return !filter || (c && [c.firstName, c.lastName].filter(Boolean).join(" ").toLowerCase().includes(filter.toLowerCase()));
+  }).sort((a,b) => b.date.localeCompare(a.date));
+  const list = document.getElementById('notesList');
+  if (notes.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title" style="font-size:15px;">No notes</div></div>';
+    return;
+  }
+  list.innerHTML = notes.map(n => {
+    const c = getClient(n.clientId);
+    return `<div class="notes-list-item${n.id===activeNoteId?' active':''}" onclick="openNote(${n.id})">
+      <div class="notes-client">${c ? clientName(n.clientId) : '?'}</div>
+      <div class="notes-date">${fmtDate(n.date)}</div>
+      <div class="notes-preview">${n.content}</div>
+    </div>`;
+  }).join('');
+  if (activeNoteId) openNote(activeNoteId);
+}
+
+function filterרשומות(v) { renderרשומות(v); }
+
+function openNote(id) {
+  activeNoteId = id;
+  const n = store.notes.find(n => n.id === id);
+  if (!n) return;
+  const c = getClient(n.clientId);
+  document.querySelectorAll('.notes-list-item').forEach(el => {
+    el.classList.toggle('active', parseInt(el.getAttribute('onclick').match(/\d+/)[0]) === id);
+  });
+  document.getElementById('notesEditor').innerHTML = `
+    <div class="notes-editor-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="notes-editor-title">${c ? clientName(n.clientId) : 'Unknown'}</div>
+          <div class="notes-editor-meta">טיפול בתאריך ${fmtDate(n.date)}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteNote(${id})">מחק</button>
+      </div>
+    </div>
+    <div class="notes-editor-body">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px;">תוכן הטיפול</div>
+      <div style="font-size:14px;line-height:1.75;white-space:pre-wrap;color:var(--text);">${n.content}</div>
+
+    </div>
+  `;
+}
+
+function deleteNote(id) {
+  if (!confirm('Delete this טיפול note?')) return;
+  store.notes = store.notes.filter(n => n.id !== id);
+  activeNoteId = null;
+  document.getElementById('notesEditor').innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">לא נבחרה רשומה</div><div class="empty-text">Select a טיפול note or create a new one</div><button class="btn btn-primary mt-2" onclick="openModal('addNote')" style="margin: 16px auto 0; display:inline-flex;">רשומה חדשה</button></div>`;
+  renderרשומות();
+}
+
+// ===== PAYMENTS =====
+function renderתשלומים() {
+  const labelFilter = document.getElementById('payLabelFilter') ? document.getElementById('payLabelFilter').value : '';
+  const balanceFilter = document.getElementById('payBalanceFilter') ? document.getElementById('payBalanceFilter').value : 'all';
+  const now = new Date(); const y = now.getFullYear();
+
+  // Populate label dropdown
+  const payLabelSel = document.getElementById('payLabelFilter');
+  if (payLabelSel) {
+    const allLabels = [...new Set(store.clients.flatMap(c => c.labels||[]))].sort();
+    const cur = payLabelSel.value;
+    payLabelSel.innerHTML = '<option value="">כל התוויות</option>' + allLabels.map(l=>`<option value="${l}"${cur===l?' selected':''}>${l}</option>`).join('');
+  }
+
+  // Compute per-client balances
+  const activeClients = store.clients.filter(c => !c.archived);
+  let totalDebt = 0, totalPaid = 0, annualPaid = 0;
+
+  const clientBalances = activeClients.map(c => {
+    const sessions = store.appointments.filter(a => a.clientId === c.id).length;
+    const owed = sessions * (c.fee || 0);
+    const paid = store.payments.filter(p => p.clientId === c.id).reduce((s,p) => s + (p.amount||0), 0);
+    const balance = owed - paid;
+    totalDebt += owed;
+    totalPaid += paid;
+    annualPaid += store.payments.filter(p => {
+      const d = new Date(p.date); return p.clientId === c.id && d.getFullYear() === y;
+    }).reduce((s,p) => s + (p.amount||0), 0);
+    return { c, sessions, owed, paid, balance };
+  });
+
+  // Update summary cards
+  document.getElementById('pay-collected').textContent = '₪' + totalPaid.toLocaleString();
+  document.getElementById('pay-outstanding').textContent = '₪' + Math.max(0, totalDebt - totalPaid).toLocaleString();
+  document.getElementById('pay-annual').textContent = '₪' + annualPaid.toLocaleString();
+
+  // Filter and render balance table
+  const clientSearch = document.getElementById('payClientSearch') ? document.getElementById('payClientSearch').value.trim().toLowerCase() : '';
+
+  const filtered = clientBalances.filter(({c, balance}) => {
+    if (clientSearch && ![c.firstName, c.lastName].filter(Boolean).join(' ').toLowerCase().includes(clientSearch)) return false;
+    if (labelFilter && (!c.labels || !c.labels.includes(labelFilter))) return false;
+    if (balanceFilter === 'debt' && balance <= 0) return false;
+    if (balanceFilter === 'clear' && balance > 0) return false;
+    return true;
+  }).sort((a,b) => b.balance - a.balance);
+
+  document.getElementById('balanceTable').innerHTML = filtered.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">אין מטופלים עם חוב</td></tr>'
+    : filtered.map(({c, sessions, owed, paid, balance}) => {
+        const clientPayments = store.payments.filter(p => p.clientId === c.id).sort((a,b) => b.date.localeCompare(a.date));
+        const lastPayment = clientPayments.length ? fmtDate(clientPayments[0].date) : '—';
+        return `<tr>
+          <td><div style="display:flex;align-items:center;gap:8px;">
+            <div class="client-avatar ${colorClass(c)}" style="width:28px;height:28px;font-size:12px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${initials(c)}</div>
+            ${clientName(c.id)}
+          </div></td>
+          <td>${sessions}</td>
+          <td style="font-weight:600;color:${balance>0?'var(--rose)':'var(--sage)'};">${balance>0?'₪'+balance.toLocaleString():'✓ מאוזן'}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${lastPayment}</td>
+          <td><button class="btn btn-sm btn-primary" onclick="openPaymentForClient(${c.id})">הוסף תשלום</button></td>
+        </tr>`;
+      }).join('');
+
+  // Render payment log with filters
+  const payLogRange = document.getElementById('payLogRange') ? document.getElementById('payLogRange').value : '1';
+  const payLogClient = document.getElementById('payLogClientFilter') ? document.getElementById('payLogClientFilter').value.trim().toLowerCase() : '';
+  let cutoffStr = '';
+  if (payLogRange !== 'all') {
+    const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth() - parseInt(payLogRange));
+    cutoffStr = cutoff.getFullYear() + '-' + String(cutoff.getMonth()+1).padStart(2,'0') + '-' + String(cutoff.getDate()).padStart(2,'0');
+  }
+  const payments = store.payments.filter(p => {
+    if (cutoffStr && p.date < cutoffStr) return false;
+    if (labelFilter) { const cl=getClient(p.clientId); if (!cl||!cl.labels||!cl.labels.includes(labelFilter)) return false; }
+    if (payLogClient) { const cl=getClient(p.clientId); if (!cl||![cl.firstName,cl.lastName].filter(Boolean).join(' ').toLowerCase().includes(payLogClient)) return false; }
+    return true;
+  }).sort((a,b) => b.date.localeCompare(a.date));
+
+  const emptyMsg = payLogRange === 'all' ? 'אין תשלומים' : 'אין תשלומים בתקופה הנבחרת';
+  document.getElementById('paymentsTable').innerHTML = payments.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">' + emptyMsg + '</td></tr>'
+    : payments.map(p => {
+        const c = getClient(p.clientId);
+        return `<tr>
+          <td>${fmtDate(p.date)}</td>
+          <td><div style="display:flex;align-items:center;gap:8px;">
+            <div class="client-avatar ${c?colorClass(c):''}" style="width:24px;height:24px;font-size:11px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;">${c?initials(c):'?'}</div>
+            ${c?clientName(p.clientId):'?'}
+          </div></td>
+          <td style="font-family:'Cormorant Garamond',serif;font-size:18px;">₪${p.amount}</td>
+          <td style="color:var(--text-muted);font-size:13px;">${p.description||''}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id})">מחק</button></td>
+        </tr>`;
+      }).join('');
+}
+
+function openPaymentForClient(clientId) {
+  openModal('addPayment');
+  setTimeout(function() {
+    document.getElementById('p-client').value = clientId;
+    updatePaymentHint();
+  }, 50);
+}
+
+function updatePaymentHint() {
+  const clientId = parseInt(document.getElementById('p-client').value);
+  const hint = document.getElementById('p-balance-hint');
+  if (!hint || !clientId) return;
+  const c = getClient(clientId);
+  if (!c) return;
+  const sessions = store.appointments.filter(a => a.clientId === clientId).length;
+  const owed = sessions * (c.fee || 0);
+  const paid = store.payments.filter(p => p.clientId === clientId).reduce((s,p) => s + (p.amount||0), 0);
+  const balance = owed - paid;
+  hint.innerHTML = balance > 0
+    ? '<span style="color:var(--rose);">יתרת חוב: ₪' + balance.toLocaleString() + '</span> (סה״כ חוב ₪' + owed.toLocaleString() + ' · שולם ₪' + paid.toLocaleString() + ')'
+    : '<span style="color:var(--sage);">✓ אין יתרת חוב</span>';
+}
+
+function deletePayment(id) {
+  if (!confirm('למחוק תשלום זה?')) return;
+  store.payments = store.payments.filter(p => p.id !== id);
+  saveToStorage();
+  renderתשלומים();
+  showToast('התשלום נמחק');
+}
+
+
+function openModal(name) {
+  currentModal = name;
+  document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-' + name).style.display = 'block';
+
+  // Clear addClient form every time it opens
+  if (name === 'addClient') {
+    ['f-firstName','f-lastName','f-phone','f-email','f-dob','f-fee','f-issue','f-referral','f-since','f-gender'].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('f-since').value = todayStr();
+    document.getElementById('f-status').value = 'active';
+    document.getElementById('f-archived').checked = false;
+    document.getElementById('f-labels-data').value = '[]';
+    document.getElementById('f-labels-container').innerHTML = '';
+    document.getElementById('f-label-input').value = '';
+  }
+
+  // Populate client dropdowns
+  const clientOptions = store.clients.map(c => `<option value="${c.id}">${[c.firstName, c.lastName].filter(Boolean).join(" ")}</option>`).join('');
+  if (name === 'addAppt') {
+    document.getElementById('a-id').value = '';
+    document.getElementById('a-client').innerHTML = clientOptions;
+    document.getElementById('a-date').value = todayStr();
+    document.getElementById('a-time').value = '10:00';
+    document.getElementById('a-duration').value = '50';
+    document.getElementById('a-type').value = 'טיפול פרטני';
+    document.getElementById('a-status').value = 'confirmed';
+    document.getElementById('a-notes').value = '';
+    document.getElementById('a-session-note').value = '';
+    document.getElementById('appt-note-indicator').textContent = '';
+    const titleEl = document.getElementById('appt-modal-title');
+    if (titleEl) titleEl.textContent = 'פגישה חדשה';
+    const saveBtn = document.getElementById('appt-save-btn');
+    if (saveBtn) saveBtn.textContent = 'שמור פגישה';
+
+  }
+  if (name === 'addNote') {
+    document.getElementById('n-client').innerHTML = clientOptions;
+    document.getElementById('n-date').value = todayStr();
+  }
+  if (name === 'addPayment') {
+    document.getElementById('p-client').innerHTML = clientOptions;
+    document.getElementById('p-date').value = todayStr();
+    document.getElementById('p-amount').value = '';
+    document.getElementById('p-desc').value = '';
+    document.getElementById('p-client').onchange = updatePaymentHint;
+    setTimeout(updatePaymentHint, 50);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+  currentModal = null;
+}
+
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function saveClient() {
+  const c = {
+    id: store.nextId++,
+    firstName: document.getElementById('f-firstName').value.trim(),
+    lastName: document.getElementById('f-lastName').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    dob: document.getElementById('f-dob').value,
+    gender: document.getElementById('f-gender').value,
+    fee: parseInt(document.getElementById('f-fee').value) || 350,
+    issue: document.getElementById('f-issue').value.trim(),
+    referral: document.getElementById('f-referral').value.trim(),
+    since: document.getElementById('f-since').value || todayStr(),
+    status: document.getElementById('f-status').value || 'active',
+    archived: document.getElementById('f-archived').checked,
+    labels: JSON.parse(document.getElementById('f-labels-data').value || '[]'),
+    colorIdx: store.clients.length % 6
+  };
+  if (!c.firstName) { alert('נא להזין שם פרטי'); return; }
+  store.clients.push(c);
+  closeModal();
+  renderView(currentView);
+}
+
+function saveAppointment() {
+  const editId = document.getElementById('a-id').value;
+  const fields = {
+    clientId: parseInt(document.getElementById('a-client').value),
+    date: document.getElementById('a-date').value,
+    time: document.getElementById('a-time').value,
+    duration: parseInt(document.getElementById('a-duration').value),
+    type: document.getElementById('a-type').value,
+    status: document.getElementById('a-status').value,
+    notes: document.getElementById('a-notes').value
+  };
+  if (!fields.date || !fields.clientId) { alert('נא למלא שדות חובה'); return; }
+
+  const sessionNoteContent = document.getElementById('a-session-note').value.trim();
+  const sessionNoteMood = '';
+  const sessionNoteGoals = '';
+
+  let apptId;
+  if (editId) {
+    apptId = parseInt(editId);
+    const appt = store.appointments.find(a => a.id === apptId);
+    if (appt) Object.assign(appt, fields);
+    showToast('הפגישה עודכנה');
+  } else {
+    apptId = store.nextId++;
+    store.appointments.push({ id: apptId, ...fields });
+    showToast('פגישה נוספה');
+  }
+
+  // Save/update linked session note if content was written
+  if (sessionNoteContent) {
+    const existingNote = store.notes.find(n => n.apptId === apptId ||
+      (n.clientId === fields.clientId && Math.abs(new Date(n.date+'T00:00:00') - new Date(fields.date+'T00:00:00')) <= 86400000));
+    if (existingNote) {
+      existingNote.content = sessionNoteContent;
+      existingNote.mood = sessionNoteMood;
+      existingNote.goals = sessionNoteGoals;
+      existingNote.date = fields.date;
+      existingNote.apptId = apptId;
+    } else {
+      store.notes.push({
+        id: store.nextId++,
+        clientId: fields.clientId,
+        date: fields.date,
+        content: sessionNoteContent,
+        mood: sessionNoteMood,
+        goals: sessionNoteGoals,
+        apptId: apptId
+      });
+    }
+  }
+
+  saveToStorage();
+  closeModal();
+  renderView(currentView);
+}
+
+function saveNote() {
+  const n = {
+    id: store.nextId++,
+    clientId: parseInt(document.getElementById('n-client').value),
+    date: document.getElementById('n-date').value,
+    content: document.getElementById('n-content').value.trim(),
+    mood: '',
+    goals: ''
+  };
+  if (!n.content || !n.clientId) { alert('נא למלא שדות חובה'); return; }
+  store.notes.push(n);
+  activeNoteId = n.id;
+  closeModal();
+  renderView('notes');
+}
+
+function savePayment() {
+  const p = {
+    id: store.nextId++,
+    clientId: parseInt(document.getElementById('p-client').value),
+    date: document.getElementById('p-date').value,
+    amount: parseFloat(document.getElementById('p-amount').value) || 0,
+    description: document.getElementById('p-desc').value.trim()
+  };
+  if (!p.clientId || !p.amount) { alert('נא למלא מטופל וסכום'); return; }
+  store.payments.push(p);
+  saveToStorage();
+  closeModal();
+  renderתשלומים();
+  showToast('תשלום נרשם בהצלחה');
+}
+
+
+function handleSearch(v) { if (currentView === 'clients') filterClients(v); }
+
+
+// ===== SETTINGS =====
+const SETTINGS_KEY = 'serene_settings';
+
+const defaultSettings = {
+  firstName: '',
+  lastName: '',
+  title: 'פסיכותרפיסט',
+  license: '',
+  clinic: '',
+  phone: '',
+  email: '',
+  address: '',
+  website: '',
+  defaultFee: 350,
+  currency: '₪',
+  duration: 50,
+  workdays: 'sun-thu',
+  dayStart: '08:00',
+  dayEnd: '20:00'
+};
+
+let settings = { ...defaultSettings };
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) settings = { ...defaultSettings, ...JSON.parse(raw) };
+  } catch(e) {}
+  applySettings();
+}
+
+function applySettings() {
+  const name = [settings.firstName, settings.lastName].filter(Boolean).join(' ') || 'ד"ר השם שלך';
+  const displayName = (settings.firstName || settings.lastName) ? name : 'ד"ר השם שלך';
+  const initials = (settings.firstName && settings.lastName)
+    ? (settings.firstName[0] + settings.lastName[0]).toUpperCase()
+    : 'Dr';
+  document.getElementById('sidebarName').textContent = displayName;
+  document.getElementById('sidebarRole').textContent = settings.title || 'Psychotherapist';
+  document.getElementById('sidebarInitials').textContent = initials;
+}
+
+function loadSettingsForm() {
+  document.getElementById('s-firstName').value = settings.firstName || '';
+  document.getElementById('s-lastName').value = settings.lastName || '';
+  document.getElementById('s-title').value = settings.title || '';
+  document.getElementById('s-license').value = settings.license || '';
+  document.getElementById('s-clinic').value = settings.clinic || '';
+  document.getElementById('s-phone').value = settings.phone || '';
+  document.getElementById('s-email').value = settings.email || '';
+  document.getElementById('s-address').value = settings.address || '';
+  document.getElementById('s-website').value = settings.website || '';
+  document.getElementById('s-defaultFee').value = settings.defaultFee || 350;
+  document.getElementById('s-currency').value = settings.currency || '₪';
+  document.getElementById('s-duration').value = settings.duration || 50;
+  document.getElementById('s-workdays').value = settings.workdays || 'sun-thu';
+  document.getElementById('s-dayStart').value = settings.dayStart || '08:00';
+  document.getElementById('s-dayEnd').value = settings.dayEnd || '20:00';
+
+  const initials = (settings.firstName && settings.lastName)
+    ? (settings.firstName[0] + settings.lastName[0]).toUpperCase()
+    : 'Dr';
+  document.getElementById('settings-avatar-preview').textContent = initials;
+}
+
+function saveSettings() {
+  settings.firstName = document.getElementById('s-firstName').value.trim();
+  settings.lastName = document.getElementById('s-lastName').value.trim();
+  settings.title = document.getElementById('s-title').value.trim();
+  settings.license = document.getElementById('s-license').value.trim();
+  settings.clinic = document.getElementById('s-clinic').value.trim();
+  settings.phone = document.getElementById('s-phone').value.trim();
+  settings.email = document.getElementById('s-email').value.trim();
+  settings.address = document.getElementById('s-address').value.trim();
+  settings.website = document.getElementById('s-website').value.trim();
+  settings.defaultFee = parseInt(document.getElementById('s-defaultFee').value) || 350;
+  settings.currency = document.getElementById('s-currency').value;
+  settings.duration = parseInt(document.getElementById('s-duration').value) || 50;
+  settings.workdays = document.getElementById('s-workdays').value;
+  settings.dayStart = document.getElementById('s-dayStart').value;
+  settings.dayEnd = document.getElementById('s-dayEnd').value;
+
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  applySettings();
+  if (driveToken) { clearTimeout(driveSaveTimer); driveSaveTimer = setTimeout(function() { driveSave(false); }, 2000); }
+
+  const initials = (settings.firstName && settings.lastName)
+    ? (settings.firstName[0] + settings.lastName[0]).toUpperCase()
+    : 'Dr';
+  document.getElementById('settings-avatar-preview').textContent = initials;
+
+  showToast('ההגדרות נשמרו');
+}
+
+// ===== LOCAL STORAGE PERSISTENCE =====
+const STORAGE_KEY = 'serene_practice_data';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      clients: store.clients,
+      appointments: store.appointments,
+      notes: store.notes,
+      payments: store.payments,
+      nextId: store.nextId,
+      savedAt: new Date().toISOString()
+    }));
+  } catch(e) { console.warn('Could not save to localStorage', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    store.clients = data.clients || [];
+    store.appointments = data.appointments || [];
+    store.notes = data.notes || [];
+    // Migrate old payments: keep only paid ones (status=paid), discard unpaid/pending
+    store.payments = (data.payments || []).filter(function(p) {
+      // Old system: keep only paid records; new system: all records are received payments
+      return !p.status || p.status === 'paid';
+    }).map(function(p) {
+      return { id: p.id, clientId: p.clientId, date: p.date, amount: p.amount || 0, description: p.description || '' };
+    });
+    store.nextId = data.nextId || 1;
+    return true;
+  } catch(e) { console.warn('Could not load from localStorage', e); return false; }
+}
+
+// Patch all save/delete functions to persist after every change
+const _saveClient = saveClient;
+saveClient = function() {
+  const before = store.clients.length;
+  _saveClient();
+  if (store.clients.length !== before) saveToStorage();
+};
+
+const _saveAppointment = saveAppointment;
+saveAppointment = function() {
+  const before = store.appointments.length;
+  _saveAppointment();
+  if (store.appointments.length !== before) saveToStorage();
+};
+
+const _saveNote = saveNote;
+saveNote = function() {
+  const before = store.notes.length;
+  _saveNote();
+  if (store.notes.length !== before) saveToStorage();
+};
+
+const _savePayment = savePayment;
+savePayment = function() {
+  const before = store.payments.length;
+  _savePayment();
+  if (store.payments.length !== before) saveToStorage();
+};
+
+
+
+const _deleteNote = deleteNote;
+deleteNote = function(id) {
+  _deleteNote(id);
+  saveToStorage();
+};
+
+// ===== EXPORT / IMPORT / CLEAR =====
+function exportData() {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    version: '1.0',
+    clients: store.clients,
+    appointments: store.appointments,
+    notes: store.notes,
+    payments: store.payments,
+    nextId: store.nextId
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `serene-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.clients || !data.appointments) { alert('קובץ גיבוי לא תקין.'); return; }
+        if (!confirm(`ייבוא ${data.clients.length} מטופלים, ${data.appointments.length} פגישות, ${data.notes.length} רשומות ו-${data.payments.length} תשלומים?\n\nפעולה זו תחליף את הנתונים הנוכחיים.`)) return;
+        store.clients = data.clients;
+        store.appointments = data.appointments;
+        store.notes = data.notes || [];
+        store.payments = data.payments || [];
+        store.nextId = data.nextId || 1;
+        saveToStorage();
+        renderView(currentView);
+        showToast('הנתונים יובאו בהצלחה');
+      } catch(err) { alert('לא ניתן לקרוא את הקובץ. ודא שמדובר בקובץ גיבוי תקין של סריין.'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (!confirm('⚠️ פעולה זו תמחק לצמיתות את כל הנתונים — מטופלים, פגישות, רשומות ותשלומים.\n\nאתה בטוח לחלוטין?')) return;
+  if (!confirm('הזדמנות אחרונה — האם אתה בטוח שברצונך למחוק הכל?')) return;
+  store.clients = [];
+  store.appointments = [];
+  store.notes = [];
+  store.payments = [];
+  store.nextId = 1;
+  saveToStorage();
+  renderView(currentView);
+  showToast('כל הנתונים נמחקו');
+}
+
+// ===== TOAST NOTIFICATION =====
+function showToast(msg, type='success') {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'toast';
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:28px;right:28px;background:${type==='success'?'var(--text)':'var(--danger)'};color:#fff;padding:12px 20px;border-radius:8px;font-size:13.5px;font-family:'DM Sans',sans-serif;box-shadow:var(--shadow-lg);z-index:9999;opacity:0;transition:opacity 0.2s;`;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity = '1'; });
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 2500);
+}
+
+// ===== INIT =====
+loadSettings();
+const hasData = loadFromStorage();
+if (!hasData) {
+  seed();
+  saveToStorage();
+}
+renderDashboard();
+
+// ===== MOBILE NAV =====
+function setMobileNav(name) {
+  document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('mnav-' + name);
+  if (el) el.classList.add('active');
+  // also sync desktop sidebar
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('open');
+}
+
+function closeMobileSidebar() {
+  document.getElementById('mainSidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// Close sidebar when a nav item is tapped on mobile
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 768) closeMobileSidebar();
+  });
+});
+
+// ===== ICAL EXPORT =====
+function exportIcalFrom(source) {
+  var rangeId = source === 'cal' ? 'ical-range-cal' : 'ical-range';
+  var rangeEl = document.getElementById(rangeId);
+  var range = rangeEl ? rangeEl.value : 'upcoming';
+  var now = new Date();
+  var today = todayStr();
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+
+  var filtered = store.appointments.filter(function(a) { return a.status !== 'cancelled'; });
+  if (range === 'upcoming') {
+    filtered = filtered.filter(function(a) { return a.date >= today; });
+  } else if (range === 'month') {
+    var ym = now.getFullYear() + '-' + pad(now.getMonth() + 1);
+    filtered = filtered.filter(function(a) { return a.date.startsWith(ym); });
+  } else if (range === '3months') {
+    var future = new Date(now);
+    future.setMonth(future.getMonth() + 3);
+    var fStr = future.getFullYear() + '-' + pad(future.getMonth()+1) + '-' + pad(future.getDate());
+    filtered = filtered.filter(function(a) { return a.date >= today && a.date <= fStr; });
+  }
+
+  if (filtered.length === 0) { showToast('אין פגישות לייצוא', 'error'); return; }
+
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jerusalem';
+  var therapistName = [settings.firstName, settings.lastName].filter(Boolean).join(' ') || 'מטפל';
+  var fmtDt = function(dt) {
+    return dt.getFullYear() + pad(dt.getMonth()+1) + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+  };
+
+  var lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Serene//HE',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:' + therapistName + ' - פגישות',
+    'X-WR-TIMEZONE:' + tz
+  ];
+
+  filtered.forEach(function(appt) {
+    var client = getClient(appt.clientId);
+    var cname = client ? [client.firstName, client.lastName].filter(Boolean).join(' ') : (appt.type || 'פגישה');
+    var dp = appt.date.split('-'); var tp = appt.time.split(':');
+    var s = new Date(+dp[0], +dp[1]-1, +dp[2], +tp[0], +tp[1]);
+    var e = new Date(s.getTime() + (appt.duration || 50) * 60000);
+    var uid = 'serene-' + appt.id + '-' + appt.date.replace(/-/g,'') + '@serene';
+    var desc = 'סוג: ' + (appt.type||'טיפול') + '\nמשך: ' + (appt.duration||50) + ' דקות' + (appt.notes ? '\nהערות: ' + appt.notes : '');
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + uid);
+    lines.push('DTSTAMP:' + fmtDt(new Date()) + 'Z');
+    lines.push('DTSTART;TZID=' + tz + ':' + fmtDt(s));
+    lines.push('DTEND;TZID=' + tz + ':' + fmtDt(e));
+    lines.push('SUMMARY:טיפול עם ' + cname);
+    lines.push('DESCRIPTION:' + desc);
+    lines.push('STATUS:' + (appt.status === 'confirmed' ? 'CONFIRMED' : 'TENTATIVE'));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+
+  var blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'serene-' + today + '.ics';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+
+  var dialog = document.getElementById('ical-dialog');
+  if (dialog) dialog.style.display = 'none';
+  showToast(filtered.length + ' פגישות יוצאו בהצלחה');
+}
+
+function toggleIcalDialog() {
+  var d = document.getElementById('ical-dialog');
+  if (!d) return;
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close ical dialog when clicking outside
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('ical-cal-btn');
+  var dialog = document.getElementById('ical-dialog');
+  if (!dialog || !btn) return;
+  if (!btn.contains(e.target) && !dialog.contains(e.target)) {
+    dialog.style.display = 'none';
+  }
+});
+
+// ===== EDIT / DELETE CLIENT =====
+function openEditClient(id) {
+  const c = getClient(id);
+  if (!c) return;
+  openModal('editClient');
+  setTimeout(function() {
+    document.getElementById('ef-id').value = c.id;
+    document.getElementById('ef-firstName').value = c.firstName || '';
+    document.getElementById('ef-lastName').value = c.lastName || '';
+    document.getElementById('ef-phone').value = c.phone || '';
+    document.getElementById('ef-email').value = c.email || '';
+    document.getElementById('ef-dob').value = c.dob || '';
+    document.getElementById('ef-gender').value = c.gender || '';
+    document.getElementById('ef-fee').value = c.fee || '';
+    document.getElementById('ef-issue').value = c.issue || '';
+    document.getElementById('ef-referral').value = c.referral || '';
+    document.getElementById('ef-since').value = c.since || '';
+    document.getElementById('ef-status').value = c.status || 'active';
+    document.getElementById('ef-archived').checked = c.archived || false;
+    const cLabels = c.labels || [];
+    document.getElementById('ef-labels-data').value = JSON.stringify(cLabels);
+    renderLabelTags('ef', cLabels);
+  }, 30);
+}
+
+function saveEditClient() {
+  const id = parseInt(document.getElementById('ef-id').value);
+  const c = getClient(id);
+  if (!c) return;
+  const firstName = document.getElementById('ef-firstName').value.trim();
+  if (!firstName) { alert('נא להזין שם פרטי'); return; }
+  c.firstName = firstName;
+  c.lastName = document.getElementById('ef-lastName').value.trim();
+  c.phone = document.getElementById('ef-phone').value.trim();
+  c.email = document.getElementById('ef-email').value.trim();
+  c.dob = document.getElementById('ef-dob').value;
+  c.fee = parseInt(document.getElementById('ef-fee').value) || c.fee;
+  c.issue = document.getElementById('ef-issue').value.trim();
+  c.referral = document.getElementById('ef-referral').value.trim();
+  c.since = document.getElementById('ef-since').value || c.since;
+  c.gender = document.getElementById('ef-gender').value;
+  c.status = document.getElementById('ef-status').value || 'active';
+  c.archived = document.getElementById('ef-archived').checked;
+  c.labels = JSON.parse(document.getElementById('ef-labels-data').value || '[]');
+  saveToStorage();
+  closeModal();
+  showClientDetail(id);
+  showToast('פרטי המטופל עודכנו');
+}
+
+function deleteClient(id) {
+  const c = getClient(id);
+  if (!c) return;
+  const name = [c.firstName, c.lastName].filter(Boolean).join(' ');
+  if (!confirm('למחוק את המטופל ' + name + '?\n\nכל הפגישות, הרשומות והתשלומים שלו יימחקו גם כן.')) return;
+  store.clients = store.clients.filter(cl => cl.id !== id);
+  store.appointments = store.appointments.filter(a => a.clientId !== id);
+  store.notes = store.notes.filter(n => n.clientId !== id);
+  store.payments = store.payments.filter(p => p.clientId !== id);
+  saveToStorage();
+  renderClients();
+  showToast('המטופל נמחק');
+}
+
+// ===== EDIT / DELETE APPOINTMENT =====
+function openEditAppt(id) {
+  const appt = store.appointments.find(a => a.id === id);
+  if (!appt) return;
+  openModal('addAppt');
+  setTimeout(function() {
+    document.getElementById('a-id').value = appt.id;
+    const clientOptions = store.clients.map(c =>
+      `<option value="${c.id}">${[c.firstName, c.lastName].filter(Boolean).join(' ')}</option>`
+    ).join('');
+    document.getElementById('a-client').innerHTML = clientOptions;
+    document.getElementById('a-client').value = appt.clientId;
+    document.getElementById('a-date').value = appt.date;
+    document.getElementById('a-time').value = appt.time;
+    document.getElementById('a-duration').value = appt.duration;
+    document.getElementById('a-type').value = appt.type;
+    document.getElementById('a-status').value = appt.status;
+    document.getElementById('a-notes').value = appt.notes || '';
+    // Load linked session note
+    const linkedNote = store.notes.find(n => n.apptId === appt.id ||
+      (n.clientId === appt.clientId && Math.abs(new Date(n.date+'T00:00:00') - new Date(appt.date+'T00:00:00')) <= 86400000));
+    document.getElementById('a-session-note').value = linkedNote ? linkedNote.content || '' : '';
+    const indEl = document.getElementById('appt-note-indicator');
+    if (indEl) indEl.innerHTML = linkedNote
+      ? '<span style="color:var(--sage);font-weight:500;">✓ רשומה קיימת</span>'
+      : '<span style="color:var(--text-muted);">לא נכתבה רשומה</span>';
+    const titleEl = document.getElementById('appt-modal-title');
+    if (titleEl) titleEl.textContent = 'עריכת פגישה';
+    const saveBtn = document.getElementById('appt-save-btn');
+    if (saveBtn) saveBtn.textContent = 'שמור שינויים';
+
+  }, 50);
+}
+
+function deleteAppt(id) {
+  const appt = store.appointments.find(a => a.id === id);
+  if (!appt) return;
+  const c = getClient(appt.clientId);
+  const name = c ? clientName(appt.clientId) : 'פגישה';
+  if (!confirm('למחוק את הפגישה עם ' + name + ' בתאריך ' + fmtDate(appt.date) + '?')) return;
+  store.appointments = store.appointments.filter(a => a.id !== id);
+  // Also remove linked payment
+  store.payments = store.payments.filter(p => p.apptId !== id);
+  saveToStorage();
+  renderView(currentView);
+  showToast('הפגישה נמחקה');
+}
+
+function hasNote(appt) {
+  if (!appt) return false;
+  const apptTime = new Date(appt.date + 'T00:00:00').getTime();
+  const oneDay = 86400000;
+  return store.notes.some(function(n) {
+    if (n.apptId === appt.id) return true;
+    if (n.clientId !== appt.clientId) return false;
+    const noteTime = new Date(n.date + 'T00:00:00').getTime();
+    return Math.abs(noteTime - apptTime) <= oneDay;
+  });
+}
+
+
+// ===== SETTINGS EXPORT / IMPORT =====
+function exportSettings() {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    type: 'serene-settings',
+    version: '1.0',
+    settings: settings
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'serene-settings-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('הגדרות יוצאו בהצלחה');
+}
+
+function importSettings() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.type !== 'serene-settings' || !data.settings) {
+          alert('קובץ הגדרות לא תקין. ודא שזהו קובץ גיבוי הגדרות של סריין.');
+          return;
+        }
+        if (!confirm('ייבוא הגדרות? הגדרות הנוכחיות יוחלפו.')) return;
+        settings = { ...defaultSettings, ...data.settings };
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        applySettings();
+        showToast('הגדרות יובאו בהצלחה');
+      } catch(err) {
+        alert('לא ניתן לקרוא את הקובץ.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ===== LABEL TAG INPUT =====
+function handleLabelInput(e, prefix) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    e.stopPropagation();
+    const input = document.getElementById(prefix + '-label-input');
+    const val = input.value.trim().replace(/,/g, '');
+    if (!val) return;
+    const dataEl = document.getElementById(prefix + '-labels-data');
+    const labels = JSON.parse(dataEl.value || '[]');
+    if (!labels.includes(val)) {
+      labels.push(val);
+      dataEl.value = JSON.stringify(labels);
+      renderLabelTags(prefix, labels);
+    }
+    input.value = '';
+  } else if (e.key === 'Backspace') {
+    const input = document.getElementById(prefix + '-label-input');
+    if (input.value === '') {
+      const dataEl = document.getElementById(prefix + '-labels-data');
+      const labels = JSON.parse(dataEl.value || '[]');
+      if (labels.length) {
+        labels.pop();
+        dataEl.value = JSON.stringify(labels);
+        renderLabelTags(prefix, labels);
+      }
+    }
+  }
+}
+
+function renderLabelTags(prefix, labels) {
+  const container = document.getElementById(prefix + '-labels-container');
+  if (!container) return;
+  container.innerHTML = labels.map((l, i) =>
+    `<span class="label-tag colored">${l}<button class="label-remove" onclick="removeLabel('${prefix}',${i})" type="button">×</button></span>`
+  ).join('');
+}
+
+function removeLabel(prefix, idx) {
+  const dataEl = document.getElementById(prefix + '-labels-data');
+  const labels = JSON.parse(dataEl.value || '[]');
+  labels.splice(idx, 1);
+  dataEl.value = JSON.stringify(labels);
+  renderLabelTags(prefix, labels);
+}
+
+// ===== LABEL SUGGESTIONS =====
+function showLabelSuggestions(input, prefix) {
+  const val = input.value.trim().toLowerCase();
+  const existing = JSON.parse(document.getElementById(prefix + '-labels-data').value || '[]');
+  const allLabels = [...new Set(store.clients.flatMap(c => c.labels || []))].sort();
+  const filtered = allLabels.filter(l =>
+    !existing.includes(l) && (!val || l.toLowerCase().includes(val))
+  );
+  const box = document.getElementById(prefix + '-label-suggestions');
+  if (!box) return;
+  if (filtered.length === 0) { box.style.display = 'none'; return; }
+  box.innerHTML = filtered.map(l =>
+    '<div class="label-suggestion-item" onmousedown="pickLabelSuggestion(event,\'' + prefix + '\',\'' + l + '\')">' + l + '</div>'
+  ).join('');
+  box.style.display = 'block';
+}
+
+function hideLabelSuggestions(prefix) {
+  setTimeout(function() {
+    const box = document.getElementById(prefix + '-label-suggestions');
+    if (box) box.style.display = 'none';
+  }, 150);
+}
+
+function pickLabelSuggestion(e, prefix, label) {
+  e.preventDefault();
+  const dataEl = document.getElementById(prefix + '-labels-data');
+  const labels = JSON.parse(dataEl.value || '[]');
+  if (!labels.includes(label)) {
+    labels.push(label);
+    dataEl.value = JSON.stringify(labels);
+    renderLabelTags(prefix, labels);
+  }
+  document.getElementById(prefix + '-label-input').value = '';
+  const box = document.getElementById(prefix + '-label-suggestions');
+  if (box) box.style.display = 'none';
+}
+
+// ===== GOOGLE DRIVE INTEGRATION =====
+var DRIVE_KEY = 'serene_drive';
+var DRIVE_FILE_NAME = 'serene-data.json';
+var driveToken = null;
+var driveFileId = null;
+var driveTokenClient = null;
+var driveSaveTimer = null;
+
+window.addEventListener('load', function() {
+  var attempts = 0;
+  var checkGis = setInterval(function() {
+    attempts++;
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      clearInterval(checkGis);
+      driveAutoReconnect();
+    }
+    if (attempts > 40) clearInterval(checkGis);
+  }, 300);
+});
+
+function getDriveConfig() {
+  try { return JSON.parse(localStorage.getItem(DRIVE_KEY)) || {}; } catch(e) { return {}; }
+}
+
+function driveAutoReconnect() {
+  var cfg = getDriveConfig();
+  if (!cfg.clientId || !cfg.token) return;
+  driveToken = cfg.token;
+  driveFileId = cfg.fileId || null;
+  initDriveTokenClient(cfg.clientId);
+  driveShowConnected(cfg.email || '');
+  driveLoad(false);
+}
+
+function initDriveTokenClient(clientId) {
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: function(resp) {
+      if (resp.error) return;
+      driveToken = resp.access_token;
+      var cfg = getDriveConfig();
+      cfg.token = driveToken;
+      localStorage.setItem(DRIVE_KEY, JSON.stringify(cfg));
+    }
+  });
+}
+
+function driveConnect() {
+  var clientId = document.getElementById('s-drive-clientid').value.trim();
+  if (!clientId) { showToast('נא להזין Client ID', 'error'); return; }
+  if (typeof google === 'undefined') { showToast('Google API עדיין נטען, נסה שוב...', 'error'); return; }
+  localStorage.setItem(DRIVE_KEY, JSON.stringify({ clientId: clientId }));
+  initDriveTokenClient(clientId);
+  driveTokenClient.callback = function(resp) {
+    if (resp.error) { showToast('שגיאת חיבור: ' + resp.error, 'error'); return; }
+    driveToken = resp.access_token;
+    fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: 'Bearer ' + driveToken } })
+      .then(function(r) { return r.json(); })
+      .then(function(info) {
+        var email = info.email || '';
+        localStorage.setItem(DRIVE_KEY, JSON.stringify({ clientId: clientId, token: driveToken, email: email }));
+        driveShowConnected(email);
+        driveFindOrCreateFile().then(function() { driveLoad(true); });
+      }).catch(function() {
+        localStorage.setItem(DRIVE_KEY, JSON.stringify({ clientId: clientId, token: driveToken }));
+        driveShowConnected('');
+        driveFindOrCreateFile().then(function() { driveLoad(true); });
+      });
+  };
+  driveTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function driveShowConnected(email) {
+  var disc = document.getElementById('drive-disconnected-ui');
+  var conn = document.getElementById('drive-connected-ui');
+  var badge = document.getElementById('drive-badge');
+  var status = document.getElementById('drive-status');
+  if (disc) disc.style.display = 'none';
+  if (conn) conn.style.display = 'block';
+  if (badge) badge.innerHTML = '<span class="badge badge-confirmed" style="font-size:11px;">מחובר</span>';
+  if (status) status.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--sage)"><circle cx="12" cy="12" r="10"/></svg>&nbsp;Drive';
+  var emailEl = document.getElementById('drive-connected-email');
+  if (emailEl && email) emailEl.textContent = email;
+}
+
+function driveDisconnect() {
+  if (!confirm('לנתק את Google Drive?')) return;
+  if (driveToken && typeof google !== 'undefined') google.accounts.oauth2.revoke(driveToken);
+  driveToken = null; driveFileId = null;
+  localStorage.removeItem(DRIVE_KEY);
+  var disc = document.getElementById('drive-disconnected-ui');
+  var conn = document.getElementById('drive-connected-ui');
+  var badge = document.getElementById('drive-badge');
+  var status = document.getElementById('drive-status');
+  if (disc) disc.style.display = 'block';
+  if (conn) conn.style.display = 'none';
+  if (badge) badge.innerHTML = '';
+  if (status) status.innerHTML = '';
+  showToast('Google Drive נותק');
+}
+
+function driveFindOrCreateFile() {
+  if (!driveToken) return Promise.resolve();
+  return fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'" + DRIVE_FILE_NAME + "'+and+trashed%3Dfalse&fields=files(id,name)", {
+    headers: { Authorization: 'Bearer ' + driveToken }
+  }).then(function(r) { return r.json(); })
+  .then(function(result) {
+    if (result.files && result.files.length > 0) {
+      driveFileId = result.files[0].id;
+      return Promise.resolve();
+    }
+    return fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })
+    }).then(function(r) { return r.json(); })
+    .then(function(file) { driveFileId = file.id; });
+  }).then(function() {
+    var cfg = getDriveConfig();
+    cfg.fileId = driveFileId;
+    localStorage.setItem(DRIVE_KEY, JSON.stringify(cfg));
+  }).catch(function(e) { console.warn('Drive find/create:', e); });
+}
+
+function driveSave(manual) {
+  if (!driveToken) return Promise.resolve();
+  var p = driveFileId ? Promise.resolve() : driveFindOrCreateFile();
+  return p.then(function() {
+    if (!driveFileId) return;
+    return fetch('https://www.googleapis.com/upload/drive/v3/files/' + driveFileId + '?uploadType=media', {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clients: store.clients, appointments: store.appointments, notes: store.notes, payments: store.payments, nextId: store.nextId, settings: settings, savedAt: new Date().toISOString() })
+    });
+  }).then(function() {
+    var time = new Date().toLocaleTimeString('he-IL');
+    var log = document.getElementById('drive-sync-log');
+    var status = document.getElementById('drive-status');
+    if (log) log.textContent = 'נשמר ב-Drive · ' + time;
+    if (status) status.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--sage)"><circle cx="12" cy="12" r="10"/></svg>&nbsp;Drive · ' + time;
+    if (manual) showToast('נשמר ב-Google Drive');
+  }).catch(function(e) {
+    console.warn('Drive save error:', e);
+    if (manual) showToast('שגיאה בשמירה ל-Drive', 'error');
+  });
+}
+
+function driveLoad(manual) {
+  if (!driveToken) return Promise.resolve();
+  var p = driveFileId ? Promise.resolve() : driveFindOrCreateFile();
+  return p.then(function() {
+    if (!driveFileId) return;
+    return fetch('https://www.googleapis.com/drive/v3/files/' + driveFileId + '?alt=media', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) {
+      if (!r.ok) { if (manual) showToast('שגיאה בטעינה', 'error'); return null; }
+      return r.json();
+    }).then(function(data) {
+      if (!data || !data.clients) { if (manual) showToast('קובץ Drive ריק'); return; }
+      store.clients = data.clients || [];
+      store.appointments = data.appointments || [];
+      store.notes = data.notes || [];
+      store.payments = (data.payments || []).filter(function(p) {
+        return !p.status || p.status === 'paid';
+      }).map(function(p) {
+        return { id: p.id, clientId: p.clientId, date: p.date, amount: p.amount || 0, description: p.description || '' };
+      });
+      store.nextId = data.nextId || 1;
+      if (data.settings) {
+        settings = Object.assign({}, defaultSettings, data.settings);
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        applySettings();
+      }
+      saveToStorage();
+      renderView(currentView);
+      var log = document.getElementById('drive-sync-log');
+      if (log) log.textContent = 'נטען מ-Drive · ' + new Date().toLocaleTimeString('he-IL');
+      if (manual) showToast('הנתונים נטענו מ-Google Drive');
+    });
+  }).catch(function(e) {
+    console.warn('Drive load error:', e);
+    if (manual) showToast('שגיאה בטעינה מ-Drive', 'error');
+  });
+}
+
+var _origSaveToStorage = saveToStorage;
+saveToStorage = function() {
+  _origSaveToStorage();
+  if (driveToken) {
+    clearTimeout(driveSaveTimer);
+    driveSaveTimer = setTimeout(function() { driveSave(false); }, 2000);
+  }
+};
+
+var _origLoadSettingsForm2 = loadSettingsForm;
+loadSettingsForm = function() {
+  _origLoadSettingsForm2();
+  var cfg = getDriveConfig();
+  var el = document.getElementById('s-drive-clientid');
+  if (el && cfg.clientId) el.value = cfg.clientId;
+  if (cfg.token) driveShowConnected(cfg.email || '');
+};
+
+</script>
+</body>
+</html>
