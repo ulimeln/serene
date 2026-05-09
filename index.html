@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.2</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.3</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3314,12 +3314,34 @@ function getDriveConfig() {
 
 function driveAutoReconnect() {
   var cfg = getDriveConfig();
-  if (!cfg.clientId || !cfg.token) return;
-  driveToken = cfg.token;
+  if (!cfg.clientId) return;
   driveFileId = cfg.fileId || null;
+  driveShowLoading();
+  // Always get a fresh token silently (no popup) on every page load
   initDriveTokenClient(cfg.clientId);
-  driveShowConnected(cfg.email || '');
-  driveLoad(false);
+  driveTokenClient.requestAccessToken({ prompt: '' });
+  var _origCb = driveTokenClient.callback;
+  driveTokenClient.callback = function(resp) {
+    if (resp.error) {
+      // Silent refresh failed (e.g. user revoked access)
+      // Fall back to stored token and try loading anyway
+      if (cfg.token) {
+        driveToken = cfg.token;
+        driveShowConnected(cfg.email || '');
+        driveLoad(false);
+      }
+      driveTokenClient.callback = _origCb;
+      return;
+    }
+    // Fresh token received
+    driveToken = resp.access_token;
+    var c = getDriveConfig();
+    c.token = driveToken;
+    localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
+    driveShowConnected(c.email || '');
+    driveLoad(false);
+    driveTokenClient.callback = _origCb;
+  };
 }
 
 function initDriveTokenClient(clientId) {
@@ -3361,7 +3383,13 @@ function driveConnect() {
   driveTokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
+function driveShowLoading() {
+  var status = document.getElementById('drive-status');
+  if (status) status.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><circle cx="12" cy="12" r="10"/></svg>&nbsp;Drive...';
+}
+
 function driveShowConnected(email) {
+  driveShowLoading();
   var disc = document.getElementById('drive-disconnected-ui');
   var conn = document.getElementById('drive-connected-ui');
   var badge = document.getElementById('drive-badge');
