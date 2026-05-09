@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.3</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.4</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3317,30 +3317,62 @@ function driveAutoReconnect() {
   if (!cfg.clientId) return;
   driveFileId = cfg.fileId || null;
   driveShowLoading();
-  // Always get a fresh token silently (no popup) on every page load
   initDriveTokenClient(cfg.clientId);
-  driveTokenClient.requestAccessToken({ prompt: '' });
+
+  // Try silent token request first (no popup)
+  // Use hint to identify the user without prompting
+  var tokenRequest = { prompt: 'none' };
+  if (cfg.email) tokenRequest.login_hint = cfg.email;
+
+  driveTokenClient.requestAccessToken(tokenRequest);
   var _origCb = driveTokenClient.callback;
   driveTokenClient.callback = function(resp) {
+    driveTokenClient.callback = _origCb;
     if (resp.error) {
-      // Silent refresh failed (e.g. user revoked access)
-      // Fall back to stored token and try loading anyway
+      // Silent failed - try with stored token directly
       if (cfg.token) {
         driveToken = cfg.token;
         driveShowConnected(cfg.email || '');
-        driveLoad(false);
+        // Try loading with old token - it might still work
+        driveLoad(false).catch(function() {
+          // Token truly expired - show reconnect button
+          var status = document.getElementById('drive-status');
+          if (status) status.innerHTML =
+            '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;">Drive - התחבר מחדש</button>';
+        });
+      } else {
+        var status = document.getElementById('drive-status');
+        if (status) status.innerHTML =
+          '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;">Drive - התחבר מחדש</button>';
       }
-      driveTokenClient.callback = _origCb;
       return;
     }
-    // Fresh token received
+    // Got fresh token silently
     driveToken = resp.access_token;
     var c = getDriveConfig();
     c.token = driveToken;
     localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
     driveShowConnected(c.email || '');
     driveLoad(false);
+  };
+}
+
+function driveReconnectPrompt() {
+  var cfg = getDriveConfig();
+  if (!cfg.clientId) { showView('settings', null); return; }
+  initDriveTokenClient(cfg.clientId);
+  var tokenRequest = {};
+  if (cfg.email) tokenRequest.login_hint = cfg.email;
+  driveTokenClient.requestAccessToken(tokenRequest);
+  var _origCb = driveTokenClient.callback;
+  driveTokenClient.callback = function(resp) {
     driveTokenClient.callback = _origCb;
+    if (resp.error) { showToast('שגיאת חיבור: ' + resp.error, 'error'); return; }
+    driveToken = resp.access_token;
+    var c = getDriveConfig(); c.token = driveToken;
+    localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
+    driveShowConnected(c.email || '');
+    driveLoad(true);
   };
 }
 
