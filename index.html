@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.4</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.5</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3316,45 +3316,18 @@ function driveAutoReconnect() {
   var cfg = getDriveConfig();
   if (!cfg.clientId) return;
   driveFileId = cfg.fileId || null;
-  driveShowLoading();
-  initDriveTokenClient(cfg.clientId);
+  // Show a simple "Connect to Drive" button in the topbar
+  driveShowConnectButton(cfg.email || '');
+}
 
-  // Try silent token request first (no popup)
-  // Use hint to identify the user without prompting
-  var tokenRequest = { prompt: 'none' };
-  if (cfg.email) tokenRequest.login_hint = cfg.email;
-
-  driveTokenClient.requestAccessToken(tokenRequest);
-  var _origCb = driveTokenClient.callback;
-  driveTokenClient.callback = function(resp) {
-    driveTokenClient.callback = _origCb;
-    if (resp.error) {
-      // Silent failed - try with stored token directly
-      if (cfg.token) {
-        driveToken = cfg.token;
-        driveShowConnected(cfg.email || '');
-        // Try loading with old token - it might still work
-        driveLoad(false).catch(function() {
-          // Token truly expired - show reconnect button
-          var status = document.getElementById('drive-status');
-          if (status) status.innerHTML =
-            '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;">Drive - התחבר מחדש</button>';
-        });
-      } else {
-        var status = document.getElementById('drive-status');
-        if (status) status.innerHTML =
-          '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px;">Drive - התחבר מחדש</button>';
-      }
-      return;
-    }
-    // Got fresh token silently
-    driveToken = resp.access_token;
-    var c = getDriveConfig();
-    c.token = driveToken;
-    localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
-    driveShowConnected(c.email || '');
-    driveLoad(false);
-  };
+function driveShowConnectButton(email) {
+  var status = document.getElementById('drive-status');
+  if (!status) return;
+  var label = email ? 'התחבר ל-Drive (' + email.split('@')[0] + ')' : 'התחבר ל-Drive';
+  status.innerHTML =
+    '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px;">' +
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' +
+    ' ' + label + '</button>';
 }
 
 function driveReconnectPrompt() {
@@ -3415,10 +3388,6 @@ function driveConnect() {
   driveTokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-function driveShowLoading() {
-  var status = document.getElementById('drive-status');
-  if (status) status.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><circle cx="12" cy="12" r="10"/></svg>&nbsp;Drive...';
-}
 
 function driveShowConnected(email) {
   driveShowLoading();
