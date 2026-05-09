@@ -963,7 +963,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.2</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.6</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3314,12 +3314,39 @@ function getDriveConfig() {
 
 function driveAutoReconnect() {
   var cfg = getDriveConfig();
-  if (!cfg.clientId || !cfg.token) return;
-  driveToken = cfg.token;
+  if (!cfg.clientId) return;
   driveFileId = cfg.fileId || null;
+  // Show a simple "Connect to Drive" button in the topbar
+  driveShowConnectButton(cfg.email || '');
+}
+
+function driveShowConnectButton(email) {
+  var status = document.getElementById('drive-status');
+  if (!status) return;
+  var label = email ? 'התחבר ל-Drive (' + email.split('@')[0] + ')' : 'התחבר ל-Drive';
+  status.innerHTML =
+    '<button onclick="driveReconnectPrompt()" class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px;">' +
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' +
+    ' ' + label + '</button>';
+}
+
+function driveReconnectPrompt() {
+  var cfg = getDriveConfig();
+  if (!cfg.clientId) { showView('settings', null); return; }
   initDriveTokenClient(cfg.clientId);
-  driveShowConnected(cfg.email || '');
-  driveLoad(false);
+  var tokenRequest = {};
+  if (cfg.email) tokenRequest.login_hint = cfg.email;
+  driveTokenClient.requestAccessToken(tokenRequest);
+  var _origCb = driveTokenClient.callback;
+  driveTokenClient.callback = function(resp) {
+    driveTokenClient.callback = _origCb;
+    if (resp.error) { showToast('שגיאת חיבור: ' + resp.error, 'error'); return; }
+    driveToken = resp.access_token;
+    var c = getDriveConfig(); c.token = driveToken;
+    localStorage.setItem(DRIVE_KEY, JSON.stringify(c));
+    driveShowConnected(c.email || '');
+    driveLoad(true);
+  };
 }
 
 function initDriveTokenClient(clientId) {
@@ -3360,6 +3387,7 @@ function driveConnect() {
   };
   driveTokenClient.requestAccessToken({ prompt: 'consent' });
 }
+
 
 function driveShowConnected(email) {
   var disc = document.getElementById('drive-disconnected-ui');
