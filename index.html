@@ -948,15 +948,45 @@
 <div class="drive-gate" id="drive-gate" style="display:none;">
   <div class="drive-gate-icon">☁️</div>
   <div class="drive-gate-title">סריין — מנהל המרפאה</div>
-  <div class="drive-gate-sub">
-    האפליקציה מחוברת ל-Google Drive.<br>
-    יש להתחבר כדי לטעון את הנתונים שלך.
-  </div>
-  <button class="btn btn-primary" onclick="driveReconnectPrompt()" style="font-size:14px;padding:12px 28px;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-    התחבר ל-Google Drive
-  </button>
 
+  <!-- State 1: Client ID saved — show connect button -->
+  <div id="gate-connect-state">
+    <div class="drive-gate-sub">
+      האפליקציה מחוברת ל-Google Drive.<br>
+      יש להתחבר כדי לטעון את הנתונים שלך.
+    </div>
+    <button class="btn btn-primary" onclick="driveReconnectPrompt()" style="font-size:14px;padding:12px 28px;margin-top:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      התחבר ל-Google Drive
+    </button>
+  </div>
+
+  <!-- State 2: No Client ID — first time setup -->
+  <div id="gate-setup-state" style="display:none;text-align:center;max-width:360px;width:100%;">
+    <div class="drive-gate-sub" style="margin-bottom:16px;">
+      ברוך הבא! כדי להתחיל, הזן את ה-Client ID של Google שלך.
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:right;">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Google Client ID</label>
+        <input class="form-control" id="gate-clientid" placeholder="123456789-abc...apps.googleusercontent.com" style="direction:ltr;text-align:left;">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="gateSaveClientId()">שמור והתחבר</button>
+    </div>
+    <details style="margin-top:16px;text-align:right;">
+      <summary style="cursor:pointer;font-size:12.5px;color:var(--accent2);font-weight:500;">איך מקבלים Client ID?</summary>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.9;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+        1. <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent2);">console.cloud.google.com</a> → פרויקט חדש<br>
+        2. Enable Google Drive API<br>
+        3. Credentials → OAuth Client ID → Web application<br>
+        4. Authorized origins: <code style="background:var(--surface2);padding:1px 4px;">https://ulimeln.github.io</code><br>
+        5. העתק Client ID → הדבק למעלה
+      </div>
+    </details>
+  </div>
+
+  <!-- Version -->
+  <div style="position:absolute;bottom:20px;font-size:11px;color:var(--text-muted);opacity:0.5;" id="gate-version"></div>
 </div>
 
 <!-- SIDEBAR OVERLAY -->
@@ -994,7 +1024,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.1</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.2</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3558,6 +3588,10 @@ function showDriveGate() {
     if (connectState) connectState.style.display = 'none';
     if (setupState) setupState.style.display = 'block';
   }
+  // Show version
+  var vEl = document.getElementById('gate-version');
+  var vTag = document.querySelector('[style*="letter-spacing:1.5px"]');
+  if (vEl && vTag) vEl.textContent = vTag.textContent;
 }
 
 
