@@ -970,6 +970,9 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       התחבר ל-Google Drive
     </button>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);">
+      Client ID שגוי? <a href="#" onclick="driveClearClientId()" style="color:var(--rose);">מחק ושנה</a>
+    </div>
   </div>
 
   <!-- State 2: No Client ID — first time setup -->
@@ -1035,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.5</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.7</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1504,7 +1507,10 @@
                 <label>Google Client ID</label>
                 <input class="form-control" id="s-drive-clientid" placeholder="123456789-abc...apps.googleusercontent.com" style="direction:ltr;text-align:left;">
               </div>
-              <button class="btn btn-primary" onclick="driveConnect()" style="margin-top:4px;">התחבר ל-Google</button>
+              <div style="display:flex;gap:8px;margin-top:4px;">
+                <button class="btn btn-primary" onclick="driveConnect()">התחבר ל-Google</button>
+                <button class="btn btn-danger btn-sm" onclick="driveClearClientId()" title="מחק Client ID ושחזר">מחק Client ID</button>
+              </div>
               <details style="margin-top:20px;">
                 <summary style="cursor:pointer;font-size:12.5px;font-weight:500;color:var(--accent2);">איך מקבלים Client ID? (מדריך 5 דקות)</summary>
                 <div style="margin-top:12px;font-size:12.5px;color:var(--text-muted);line-height:1.9;background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border);">
@@ -3625,6 +3631,20 @@ function gateSaveClientId() {
   var settingsEl = document.getElementById('s-drive-clientid');
   if (settingsEl) settingsEl.value = clientId;
   driveReconnectPrompt();
+}
+
+function driveClearClientId() {
+  if (!confirm('למחוק את ה-Client ID השמור?\nהדבר ינתק אותך מ-Drive ויאפשר להזין ID חדש.')) return;
+  if (driveToken && typeof google !== 'undefined') {
+    try { google.accounts.oauth2.revoke(driveToken); } catch(e) {}
+  }
+  driveToken = null; driveFileId = null;
+  localStorage.removeItem(DRIVE_KEY);
+  var el = document.getElementById('s-drive-clientid');
+  if (el) el.value = '';
+  showToast('Client ID נמחק — ניתן להזין ID חדש');
+  // Refresh the gate so it shows setup state
+  showDriveGate();
 }
 
 </script>
