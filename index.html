@@ -802,45 +802,18 @@
       min-height: 300px;
     }
 
-    /* Calendar mobile */
-    #view-calendar { overflow-x: hidden; }
-
-    /* Week view — horizontal scroll */
-    #calendarContent { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .week-grid {
-      display: grid !important;
-      min-width: 520px;
-      font-size: 10px;
-    }
-    .week-day-header { padding: 4px 2px; font-size: 9px; }
-    .week-day-header span { font-size: 13px; }
-    .time-label { font-size: 9px; padding: 0 3px; min-width: 32px; }
-    .time-slot { min-height: 38px; padding: 1px; }
-    .cal-event { font-size: 9px; padding: 1px 3px; line-height: 1.3; }
-
-    /* Month view — horizontal scroll */
-    .month-grid {
-      min-width: 320px;
-      font-size: 10px;
-    }
-    .month-day-header { padding: 5px 2px; font-size: 9px; letter-spacing: 0; }
-    .month-cell { min-height: 54px; padding: 3px; }
-    .day-num { font-size: 13px; width: 20px; height: 20px; }
-    .month-event { font-size: 9px; padding: 1px 3px; }
-
-    /* Agenda — good on mobile already, just tighten */
-    .agenda-item { flex-direction: column; gap: 6px; padding: 10px 0; }
-    .agenda-date-col { display: flex; align-items: center; gap: 8px; }
-    .agenda-date { font-size: 18px; }
-    .agenda-appt { padding: 8px 10px; }
-    .agenda-time { font-size: 16px; min-width: 40px; }
+    /* Calendar simplified */
+    .week-grid { font-size: 10.5px; overflow-x: auto; display: block; }
+    .week-day-header { padding: 5px 2px; font-size: 9.5px; }
+    .week-day-header span { font-size: 14px; }
+    .time-label { font-size: 9px; padding: 0 3px; min-width: 36px; }
+    .time-slot { height: 40px; }
+    .cal-event { font-size: 9px; padding: 1px 3px; }
 
     /* Cal nav row */
-    #calTitle { font-size: 12px; min-width: 80px; text-align: center; }
+    #calTitle { font-size: 13px; min-width: 100px; }
     .cal-tabs { gap: 1px; }
-    .cal-tab { padding: 4px 7px; font-size: 11px; }
-    #view-calendar > .flex { gap: 6px; }
-    #calLabelFilter { font-size: 11px; padding: 4px 6px; max-width: 100px; }
+    .cal-tab { padding: 5px 9px; font-size: 11.5px; }
 
     /* Forms */
     .form-row { grid-template-columns: 1fr; }
@@ -948,12 +921,43 @@
   }
   .label-suggestion-item:hover { background: var(--sage-light); color: var(--sage); }
 
+
+  /* Drive not connected overlay */
+  .drive-gate {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; padding: 32px;
+  }
+  .drive-gate-icon { font-size: 48px; opacity: 0.4; }
+  .drive-gate-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400; color: var(--text);
+  }
+  .drive-gate-sub { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.7; }
+
 </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
 <!-- SIDEBAR -->
+
+<!-- DRIVE GATE -->
+<div class="drive-gate" id="drive-gate" style="display:none;">
+  <div class="drive-gate-icon">☁️</div>
+  <div class="drive-gate-title">סריין — מנהל המרפאה</div>
+  <div class="drive-gate-sub">
+    האפליקציה מחוברת ל-Google Drive.<br>
+    יש להתחבר כדי לטעון את הנתונים שלך.
+  </div>
+  <button class="btn btn-primary" onclick="driveReconnectPrompt()" style="font-size:14px;padding:12px 28px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    התחבר ל-Google Drive
+  </button>
+
+</div>
 
 <!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
@@ -990,7 +994,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.7</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.8</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2212,7 +2216,7 @@ function renderWeek(el) {
 
   document.getElementById('calTitle').textContent = `${days[0].toLocaleDateString('he-IL',{day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric'})}`;
 
-  let html = `<div style="overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 220px);-webkit-overflow-scrolling:touch;">`;
+  let html = `<div style="overflow-y:auto;max-height:calc(100vh - 240px);">`;
   html += `<div class="week-grid">`;
   html += `<div class="week-day-header" style="background:var(--surface2);"></div>`;
   days.forEach((d,i) => {
@@ -2252,7 +2256,7 @@ function renderMonth(el) {
   const dow2 = ["ב'","ג'","ד'","ה'","ו'",'שבת',"א'"];
   const colors = ['sage','rose','gold'];
 
-  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><div class="month-grid" style="min-width:320px;">`;
+  let html = `<div class="month-grid">`;
   dow2.forEach(d => html += `<div class="month-day-header">${d}</div>`);
   for (let i=0; i<startDow; i++) {
     const prev = new Date(y,m,1-startDow+i);
@@ -2936,12 +2940,18 @@ function showToast(msg, type='success') {
 
 // ===== INIT =====
 loadSettings();
-const hasData = loadFromStorage();
-if (!hasData) {
-  seed();
-  saveToStorage();
+var driveConfig = getDriveConfig ? getDriveConfig() : {};
+if (driveConfig && driveConfig.clientId) {
+  // Drive configured — show gate, don't load any local data
+  store.clients = []; store.appointments = []; store.notes = []; store.payments = []; store.nextId = 1;
+  renderDashboard();
+  showDriveGate();
+} else {
+  // No Drive configured — work normally with localStorage
+  var hasData = loadFromStorage();
+  if (!hasData) { seed(); saveToStorage(); }
+  renderDashboard();
 }
-renderDashboard();
 
 // ===== MOBILE NAV =====
 function setMobileNav(name) {
@@ -3547,6 +3557,7 @@ function driveLoad(manual) {
         applySettings();
       }
       saveToStorage();
+      hideDriveGate();
       renderView(currentView);
       var log = document.getElementById('drive-sync-log');
       if (log) log.textContent = 'נטען מ-Drive · ' + new Date().toLocaleTimeString('he-IL');
@@ -3575,6 +3586,18 @@ loadSettingsForm = function() {
   if (el && cfg.clientId) el.value = cfg.clientId;
   if (cfg.token) driveShowConnected(cfg.email || '');
 };
+
+// ===== DRIVE GATE =====
+function showDriveGate() {
+  var gate = document.getElementById('drive-gate');
+  if (gate) gate.style.display = 'flex';
+}
+
+function hideDriveGate() {
+  var gate = document.getElementById('drive-gate');
+  if (gate) gate.style.display = 'none';
+}
+
 
 </script>
 </body>
