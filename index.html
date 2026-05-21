@@ -994,7 +994,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.0</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.1</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3546,15 +3546,40 @@ loadSettingsForm = function() {
 // ===== DRIVE GATE =====
 function showDriveGate() {
   var gate = document.getElementById('drive-gate');
-  if (gate) gate.style.display = 'flex';
-
+  if (!gate) return;
+  gate.style.display = 'flex';
+  var cfg = (function() { try { return JSON.parse(localStorage.getItem('serene_drive')) || {}; } catch(e) { return {}; } })();
+  var connectState = document.getElementById('gate-connect-state');
+  var setupState = document.getElementById('gate-setup-state');
+  if (cfg.clientId) {
+    if (connectState) connectState.style.display = 'block';
+    if (setupState) setupState.style.display = 'none';
+  } else {
+    if (connectState) connectState.style.display = 'none';
+    if (setupState) setupState.style.display = 'block';
+  }
 }
+
 
 function hideDriveGate() {
   var gate = document.getElementById('drive-gate');
   if (gate) gate.style.display = 'none';
 }
 
+
+
+function gateSaveClientId() {
+  var clientId = document.getElementById('gate-clientid').value.trim();
+  if (!clientId) { alert('נא להזין Client ID'); return; }
+  localStorage.setItem('serene_drive', JSON.stringify({ clientId: clientId }));
+  var connectState = document.getElementById('gate-connect-state');
+  var setupState = document.getElementById('gate-setup-state');
+  if (connectState) connectState.style.display = 'block';
+  if (setupState) setupState.style.display = 'none';
+  var settingsEl = document.getElementById('s-drive-clientid');
+  if (settingsEl) settingsEl.value = clientId;
+  driveReconnectPrompt();
+}
 
 </script>
 </body>
