@@ -994,7 +994,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.0.9</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.0</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1861,51 +1861,6 @@ let calDate = new Date();
 let activeNoteId = null;
 
 // ===== SEED DATA =====
-function seed() {
-  const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth();
-
-  store.clients = [
-    { id: 1, firstName: 'מאיה', lastName: 'כהן', phone: '050-1234567', email: 'maya@email.com', dob: '1989-04-12', fee: 380, issue: 'חרדה ולחץ בעבודה', referral: 'הפניה עצמית', since: '2024-01-15', colorIdx: 1 },
-    { id: 2, firstName: 'דניאל', lastName: 'לוי', phone: '052-9876543', email: 'daniel@email.com', dob: '1983-09-22', fee: 350, issue: 'דיכאון, בעיות זוגיות', referral: 'הפניה מרופא משפחה', since: '2024-03-08', colorIdx: 3 },
-    { id: 3, firstName: 'שרה', lastName: 'גולדברג', phone: '054-5551234', email: 'sarah@email.com', dob: '1995-02-28', fee: 400, issue: 'PTSD, עיבוד טראומה', referral: 'Psychiatrist', since: '2023-11-20', colorIdx: 2 },
-    { id: 4, firstName: 'אבי', lastName: 'מזרחי', phone: '053-3334444', email: 'avi@email.com', dob: '1978-07-05', fee: 320, issue: 'מעברים בחיים, לחץ בקריירה', referral: 'Friend', since: '2024-06-01', colorIdx: 4 },
-  ];
-  store.nextId = 5;
-
-  const dates = [0, 0, 1, 2, 3, 5, 7, 7, 8].map(d => {
-    const dt = new Date(y, m, now.getDate() - 3 + d);
-    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-  });
-
-  store.appointments = [
-    { id: 1, clientId: 1, date: dates[0], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-    { id: 2, clientId: 3, date: dates[1], time: '14:00', duration: 60, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-    { id: 3, clientId: 2, date: dates[2], time: '11:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-    { id: 4, clientId: 4, date: dates[3], time: '09:00', duration: 50, type: 'פגישת היכרות', status: 'confirmed', notes: '' },
-    { id: 5, clientId: 1, date: dates[4], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-    { id: 6, clientId: 3, date: dates[5], time: '15:00', duration: 60, type: 'טיפול פרטני', status: 'pending', notes: '' },
-    { id: 7, clientId: 2, date: dates[6], time: '11:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-    { id: 8, clientId: 4, date: dates[7], time: '16:00', duration: 50, type: 'מעקב', status: 'confirmed', notes: '' },
-    { id: 9, clientId: 1, date: dates[8], time: '10:00', duration: 50, type: 'טיפול פרטני', status: 'confirmed', notes: '' },
-  ];
-
-  store.notes = [
-    { id: 1, clientId: 1, date: dates[0], content: "Maya presented with heightened anxiety around performance reviews at work. Explored underlying perfectionism patterns. Used CBT reframing exercise — she responded well. Mood lifted toward טיפול end.", mood: "חרד → מלא תקווה", goals: "Practice 5-4-3-2-1 grounding exercise daily. Journal automatic thoughts before next טיפול." },
-    { id: 2, clientId: 3, date: dates[1], content: "שרה עשתה התקדמות משמעותית בדיון על האירוע הטראומטי מבלי לדיסוציאציה. שמרה על עיגון לאורך כל הפגישה. נסקרו תרגילי הכנה ל-EMDR.", mood: "מוגן → נוכח", goals: "Continue bilateral stimulation exercises. Identify safe place imagery for next EMDR טיפול." },
-    { id: 3, clientId: 2, date: dates[2], content: "דניאל חקר תחושות של חוסר ערך בזוגיות. הקשר לדפוסי התקשרות מוקדמים עם האב. הביע אמביוולנטיות לגבי טיפול זוגי. תובנה טובה היום.", mood: "שטוח → הרהורי", goals: "להביא דוגמה אחת לדיבור עצמי שלילי לשיתוף בשבוע הבא." },
-  ];
-
-  store.payments = [
-    { id: 1, clientId: 1, date: dates[0], amount: 380, status: 'paid', description: 'טיפול פרטני #8' },
-    { id: 2, clientId: 3, date: dates[1], amount: 400, status: 'paid', description: 'טיפול פרטני #15' },
-    { id: 3, clientId: 2, date: dates[2], amount: 350, status: 'unpaid', description: 'טיפול פרטני #6' },
-    { id: 4, clientId: 4, date: dates[3], amount: 320, status: 'paid', description: 'פגישת היכרות' },
-    { id: 5, clientId: 1, date: dates[4], amount: 380, status: 'paid', description: 'טיפול פרטני #9' },
-    { id: 6, clientId: 3, date: dates[5], amount: 400, status: 'pending', description: 'טיפול פרטני #16' },
-    { id: 7, clientId: 2, date: dates[6], amount: 350, status: 'unpaid', description: 'טיפול פרטני #7' },
-  ];
-}
 
 // ===== HELPERS =====
 function getClient(id) { return store.clients.find(c => c.id === id); }
@@ -2940,19 +2895,17 @@ function showToast(msg, type='success') {
 
 // ===== INIT =====
 loadSettings();
-var driveConfig = getDriveConfig ? getDriveConfig() : {};
-var driveMode = !!(driveConfig && driveConfig.clientId);
+// Check Drive config directly from localStorage (getDriveConfig not yet defined)
+var _driveCfgRaw = (function() {
+  try { return JSON.parse(localStorage.getItem('serene_drive')) || {}; } catch(e) { return {}; }
+})();
+var driveMode = !!(_driveCfgRaw && _driveCfgRaw.clientId);
 
-if (driveMode) {
-  // Drive configured — show gate only, no local data, no seed
-  renderDashboard();
-  showDriveGate();
-} else {
-  // No Drive — work with localStorage
-  var hasData = loadFromStorage();
-  if (!hasData) { seed(); saveToStorage(); }
-  renderDashboard();
-}
+// Always show gate — Drive is required
+try { localStorage.removeItem('serene_practice_data'); } catch(e) {}
+store.clients = []; store.appointments = []; store.notes = []; store.payments = []; store.nextId = 1;
+renderDashboard();
+showDriveGate();
 
 // ===== MOBILE NAV =====
 function setMobileNav(name) {
@@ -3573,7 +3526,6 @@ function driveLoad(manual) {
 var _origSaveToStorage = saveToStorage;
 saveToStorage = function() {
   if (!driveMode) {
-    // Only save to localStorage when not in Drive mode
     _origSaveToStorage();
   }
   if (driveToken) {
@@ -3595,8 +3547,7 @@ loadSettingsForm = function() {
 function showDriveGate() {
   var gate = document.getElementById('drive-gate');
   if (gate) gate.style.display = 'flex';
-  // Clear any stale localStorage data so it never leaks through
-  try { localStorage.removeItem('serene_practice_data'); } catch(e) {}
+
 }
 
 function hideDriveGate() {
