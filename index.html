@@ -1024,7 +1024,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.2</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.3</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2012,12 +2012,17 @@ function renderClients(filter = '', showArchived = false) {
     labelSelectHtml += '<option value="' + l + '"' + (activeLabelFilter===l?' selected':'') + '>' + l + '</option>';
   });
   labelSelectHtml += '</select>';
+  // Get current search value if exists
+  var existingSearch = document.getElementById('clients-search-bar');
+  var currentSearch = existingSearch ? existingSearch.value : '';
+
   filterBar.innerHTML =
-    '<button class="cal-tab' + (!showArchived?' active':'') + '" onclick="renderClients(\'\',false)" style="font-size:12px;">פעילים</button>' +
-    '<button class="cal-tab' + (showArchived?' active':'') + '" onclick="renderClients(\'\',true)" style="font-size:12px;">ארכיון</button>' +
+    '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;">' +
+    '<button class="cal-tab' + (!showArchived?' active':'') + '" onclick="renderClients(document.getElementById(\'clients-search-bar\').value,false)" style="font-size:12px;">פעילים</button>' +
+    '<button class="cal-tab' + (showArchived?' active':'') + '" onclick="renderClients(document.getElementById(\'clients-search-bar\').value,true)" style="font-size:12px;">ארכיון</button>' +
     labelSelectHtml +
-    '<div style="flex:1"></div>' +
-    '<span style="font-size:12px;color:var(--text-muted);">' + store.clients.filter(function(c){return !c.archived;}).length + ' פעילים · ' + store.clients.filter(function(c){return c.archived;}).length + ' בארכיון</span>';
+    '<div style="flex:1;min-width:120px;"><div class="search-bar" style="width:100%;"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="clients-search-bar" placeholder="חיפוש מטופלים…" value="' + currentSearch + '" oninput="filterClients(this.value)" style="width:100%;"></div></div>' +
+    '</div>';
 
   const grid = document.getElementById('clientsGrid');
   const activeLbl = window._activeLabelFilter || '';
@@ -2054,7 +2059,7 @@ function renderClients(filter = '', showArchived = false) {
   }).join('');
 }
 
-function filterClients(v) { renderClients(v); }
+function filterClients(v) { var archived = false; renderClients(v !== undefined ? v : '', archived); }
 
 function showClientDetail(id) {
   const c = getClient(id);
