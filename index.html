@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.4</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.5</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3546,6 +3546,7 @@ function driveClearClientId() {
 var NOTES_CACHE_KEY = 'serene_notes_folders';
 var notesFolderRootId = null;
 var notesClientFolders = {};
+var notesFolderCreating = {};  // Lock to prevent parallel folder creation
 
 // Load cached folder IDs from localStorage
 (function() {
@@ -3599,11 +3600,13 @@ function notesGetRootFolder() {
 // Find or create client subfolder
 function notesGetClientFolder(clientId) {
   if (notesClientFolders[clientId]) return Promise.resolve(notesClientFolders[clientId]);
+  // Return existing creation promise if already in progress (prevents duplicates)
+  if (notesFolderCreating[clientId]) return notesFolderCreating[clientId];
   var c = getClient(clientId);
   if (!c) return Promise.reject('Client not found');
   var folderName = [c.firstName, c.lastName].filter(Boolean).join(' ');
 
-  return notesGetRootFolder().then(function(rootId) {
+  notesFolderCreating[clientId] = notesGetRootFolder().then(function(rootId) {
     var q = encodeURIComponent("name='" + folderName + "' and '" + rootId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
     return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
       headers: { Authorization: 'Bearer ' + driveToken }
@@ -3612,6 +3615,7 @@ function notesGetClientFolder(clientId) {
       if (result.files && result.files.length > 0) {
         notesClientFolders[clientId] = result.files[0].id;
         notesSaveFolderCache();
+        delete notesFolderCreating[clientId];
         return notesClientFolders[clientId];
       }
       return fetch('https://www.googleapis.com/drive/v3/files', {
@@ -3619,9 +3623,15 @@ function notesGetClientFolder(clientId) {
         headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: [rootId] })
       }).then(function(r) { return r.json(); })
-      .then(function(f) { notesClientFolders[clientId] = f.id; notesSaveFolderCache(); return f.id; });
+      .then(function(f) {
+        notesClientFolders[clientId] = f.id;
+        notesSaveFolderCache();
+        delete notesFolderCreating[clientId];
+        return f.id;
+      });
     });
   });
+  return notesFolderCreating[clientId];
 }
 
 // List files in client folder
@@ -3644,7 +3654,7 @@ function notesCreateFile(clientId, fileType, fileName) {
   return notesGetClientFolder(clientId).then(function(folderId) {
     if (fileType === 'gdoc') {
       // Create Google Doc
-      return fetch('https://www.googleapis.com/drive/v3/files', {
+      return fetch('https://www.googleapis.com/drive/v3/files?fields=id,name,webViewLink', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3832,7 +3842,8 @@ function notesDoCreate(clientId) {
   showToast('יוצר קובץ...');
   notesCreateFile(clientId, fileType, fileName).then(function(file) {
     showToast('הקובץ נוצר!');
-    if (file.webViewLink) window.open(file.webViewLink, '_blank');
+    var link = file.webViewLink || ('https://docs.google.com/document/d/' + file.id + '/edit');
+    window.open(link, '_blank');
     // Clear folder cache to refresh file list
     delete notesClientFolders[clientId];
     notesGetClientFolder(clientId).then(function() {
