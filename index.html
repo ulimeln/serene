@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.6</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.7</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1836,12 +1836,18 @@
         </select>
       </div>
       <div class="form-group" id="appt-session-note-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <label style="margin-bottom:0;">רשומת טיפול</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label style="margin-bottom:0;">רשומת טיפול ב-Drive</label>
           <span id="appt-note-indicator" style="font-size:11px;"></span>
         </div>
-        <textarea class="form-control" id="a-session-note" rows="5" placeholder="רשומת טיפול חופשית…" style="min-height:100px;"></textarea>
-
+        <div id="appt-note-drive-area" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="appt-note-open-btn" onclick="apptOpenNoteInDrive()" style="display:none;">
+            📄 פתח רשומה
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="appt-note-create-btn" onclick="apptCreateNoteInDrive()">
+            + צור רשומת טיפול
+          </button>
+        </div>
       </div>
       <div class="form-group">
         <label>הערות פגישה (לוגיסטיות)</label>
@@ -2562,7 +2568,7 @@ function saveAppointment() {
   };
   if (!fields.date || !fields.clientId) { alert('נא למלא שדות חובה'); return; }
 
-  const sessionNoteContent = document.getElementById('a-session-note').value.trim();
+  const sessionNoteContent = ''; // Notes now in Drive
   const sessionNoteMood = '';
   const sessionNoteGoals = '';
 
@@ -3048,11 +3054,14 @@ function openEditAppt(id) {
     // Load linked session note
     const linkedNote = store.notes.find(n => n.apptId === appt.id ||
       (n.clientId === appt.clientId && Math.abs(new Date(n.date+'T00:00:00') - new Date(appt.date+'T00:00:00')) <= 86400000));
-    document.getElementById('a-session-note').value = linkedNote ? linkedNote.content || '' : '';
+    // Show Drive note buttons
+    const openBtn = document.getElementById('appt-note-open-btn');
+    const createBtn = document.getElementById('appt-note-create-btn');
     const indEl = document.getElementById('appt-note-indicator');
-    if (indEl) indEl.innerHTML = linkedNote
-      ? '<span style="color:var(--sage);font-weight:500;">✓ רשומה קיימת</span>'
-      : '<span style="color:var(--text-muted);">לא נכתבה רשומה</span>';
+    const apptDate = document.getElementById('a-date').value || appt.date;
+    const apptClientId = document.getElementById('a-client').value || appt.clientId;
+    // Check if note file exists in cache for this appt
+    apptCheckNoteExists(parseInt(apptClientId), apptDate, openBtn, createBtn, indEl);
     const titleEl = document.getElementById('appt-modal-title');
     if (titleEl) titleEl.textContent = 'עריכת פגישה';
     const saveBtn = document.getElementById('appt-save-btn');
@@ -3077,14 +3086,31 @@ function deleteAppt(id) {
 
 function hasNote(appt) {
   if (!appt) return false;
-  const apptTime = new Date(appt.date + 'T00:00:00').getTime();
-  const oneDay = 86400000;
-  return store.notes.some(function(n) {
-    if (n.apptId === appt.id) return true;
-    if (n.clientId !== appt.clientId) return false;
-    const noteTime = new Date(n.date + 'T00:00:00').getTime();
-    return Math.abs(noteTime - apptTime) <= oneDay;
-  });
+  // Check Drive notes cache — look for a file with this date in client's folder
+  // We use a local cache of known note dates per client
+  if (!window._notesDatesCache) window._notesDatesCache = {};
+  var clientDates = window._notesDatesCache[appt.clientId];
+  if (clientDates) return clientDates.indexOf(appt.date) !== -1;
+  // Not cached yet — trigger async load and return false for now
+  notesLoadDatesCache(appt.clientId);
+  return false;
+}
+
+function notesLoadDatesCache(clientId) {
+  if (!driveToken || !settings.notesFolder) return;
+  if (!window._notesDatesCache) window._notesDatesCache = {};
+  if (window._notesDatesLoading) return;
+  window._notesDatesLoading = true;
+  notesListClientFiles(clientId).then(function(files) {
+    if (!window._notesDatesCache) window._notesDatesCache = {};
+    // Extract dates from file names (format: YYYY-MM-DD - פגישה...)
+    var dates = files.map(function(f) {
+      var m = f.name.match(/^(\d{4}-\d{2}-\d{2})/);
+      return m ? m[1] : null;
+    }).filter(Boolean);
+    window._notesDatesCache[clientId] = dates;
+    window._notesDatesLoading = false;
+  }).catch(function() { window._notesDatesLoading = false; });
 }
 
 
@@ -3793,8 +3819,9 @@ function notesLoadClientFiles(clientId) {
       el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">אין רשומות עדיין</div>';
       return;
     }
+    var recentFiles = files.slice(0, 5);
     el.innerHTML = '<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">' +
-      files.slice(0, 5).map(function(f) {
+      recentFiles.map(function(f) {
         var icon = f.mimeType === 'application/vnd.google-apps.document' ? '📄' : '📝';
         var date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('he-IL') : '';
         return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">' +
@@ -3816,7 +3843,7 @@ function notesShowCreateDialog(clientId) {
   var c = getClient(clientId);
   if (!c) return;
   var today = todayStr();
-  var defaultName = today + ' - ' + clientName(clientId);
+  var defaultName = today + ' - כללי';
 
   var html = '<div style="position:fixed;inset:0;background:rgba(42,36,32,0.45);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);" id="notes-create-overlay" onclick="if(event.target===this)this.remove();">' +
     '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:400px;max-width:95vw;padding:24px;">' +
@@ -3890,6 +3917,72 @@ document.addEventListener('DOMContentLoaded', function() {
   var vTag = document.querySelector('[style*="letter-spacing:1.5px"]');
   if (vEl && vTag) vEl.textContent = vTag.textContent;
 });
+
+// ===== APPOINTMENT NOTE DRIVE FUNCTIONS =====
+
+// Check if a meeting note file exists for this appointment
+function apptCheckNoteExists(clientId, date, openBtn, createBtn, indEl) {
+  if (!driveToken || !settings.notesFolder) {
+    if (indEl) indEl.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Drive לא מחובר</span>';
+    if (openBtn) openBtn.style.display = 'none';
+    if (createBtn) createBtn.style.display = 'inline-flex';
+    return;
+  }
+  // Store expected file name pattern
+  var expectedPrefix = date + ' - פגישה';
+  notesGetClientFolder(clientId).then(function(folderId) {
+    var q = encodeURIComponent("'" + folderId + "' in parents and name contains '" + date + "' and trashed=false");
+    return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name,webViewLink)', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.json(); });
+  }).then(function(result) {
+    var files = (result && result.files) ? result.files.filter(function(f) { return f.name.indexOf(date) !== -1; }) : [];
+    if (files.length > 0) {
+      var link = files[0].webViewLink || ('https://docs.google.com/document/d/' + files[0].id + '/edit');
+      if (openBtn) { openBtn.style.display = 'inline-flex'; openBtn.dataset.link = link; }
+      if (createBtn) createBtn.style.display = 'none';
+      if (indEl) indEl.innerHTML = '<span style="color:var(--sage);font-weight:500;">✓ רשומה קיימת</span>';
+    } else {
+      if (openBtn) openBtn.style.display = 'none';
+      if (createBtn) createBtn.style.display = 'inline-flex';
+      if (indEl) indEl.innerHTML = '<span style="color:var(--text-muted);">אין רשומה</span>';
+    }
+  }).catch(function() {
+    if (openBtn) openBtn.style.display = 'none';
+    if (createBtn) createBtn.style.display = 'inline-flex';
+  });
+}
+
+function apptOpenNoteInDrive() {
+  var btn = document.getElementById('appt-note-open-btn');
+  if (btn && btn.dataset.link) window.open(btn.dataset.link, '_blank');
+}
+
+function apptCreateNoteInDrive() {
+  var clientId = parseInt(document.getElementById('a-client').value);
+  var date = document.getElementById('a-date').value;
+  var time = document.getElementById('a-time').value || '';
+  if (!clientId || !date) { showToast('נא לבחור מטופל ותאריך תחילה', 'error'); return; }
+  if (!driveToken || !settings.notesFolder) { showToast('יש להגדיר תיקיית רשומות ב-Drive', 'error'); return; }
+  var c = getClient(clientId);
+  var clientNameStr = c ? clientName(clientId) : '';
+  var fileName = date + ' - פגישה - ' + clientNameStr;
+  var createBtn = document.getElementById('appt-note-create-btn');
+  if (createBtn) createBtn.textContent = '⏳ יוצר...';
+  notesCreateFile(clientId, 'gdoc', fileName).then(function(file) {
+    var link = file.webViewLink || ('https://docs.google.com/document/d/' + file.id + '/edit');
+    window.open(link, '_blank');
+    var openBtn = document.getElementById('appt-note-open-btn');
+    var indEl = document.getElementById('appt-note-indicator');
+    if (openBtn) { openBtn.style.display = 'inline-flex'; openBtn.dataset.link = link; }
+    if (createBtn) createBtn.style.display = 'none';
+    if (indEl) indEl.innerHTML = '<span style="color:var(--sage);font-weight:500;">✓ רשומה קיימת</span>';
+    showToast('רשומת טיפול נוצרה!');
+  }).catch(function(e) {
+    showToast('שגיאה ביצירת רשומה: ' + e, 'error');
+    if (createBtn) createBtn.textContent = '+ צור רשומת טיפול';
+  });
+}
 
 </script>
 </body>
