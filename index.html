@@ -956,7 +956,7 @@
 <!-- SIDEBAR -->
 
 <!-- DRIVE GATE -->
-<div class="drive-gate" id="drive-gate" style="display:none;">
+<div class="drive-gate" id="drive-gate" style="display:flex;">
   <div class="drive-gate-icon">☁️</div>
   <div class="drive-gate-title">סריין — מנהל המרפאה</div>
 
@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.0</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.3</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2759,27 +2759,7 @@ saveAppointment = function() {
   if (store.appointments.length !== before) saveToStorage();
 };
 
-const _saveNote = saveNote;
-saveNote = function() {
-  const before = store.notes.length;
-  _saveNote();
-  if (store.notes.length !== before) saveToStorage();
-};
 
-const _savePayment = savePayment;
-savePayment = function() {
-  const before = store.payments.length;
-  _savePayment();
-  if (store.payments.length !== before) saveToStorage();
-};
-
-
-
-const _deleteNote = deleteNote;
-deleteNote = function(id) {
-  _deleteNote(id);
-  saveToStorage();
-};
 
 // ===== EXPORT / IMPORT / CLEAR =====
 function exportData() {
@@ -2788,7 +2768,6 @@ function exportData() {
     version: '1.0',
     clients: store.clients,
     appointments: store.appointments,
-    notes: store.notes,
     payments: store.payments,
     nextId: store.nextId
   };
@@ -3846,6 +3825,23 @@ function notesGetClientFolderLink(clientId) {
   if (folderId) return 'https://drive.google.com/drive/folders/' + folderId;
   return null;
 }
+
+// Show correct gate state on load
+document.addEventListener('DOMContentLoaded', function() {
+  var cfg = (function() { try { return JSON.parse(localStorage.getItem('serene_drive')) || {}; } catch(e) { return {}; } })();
+  var connectState = document.getElementById('gate-connect-state');
+  var setupState = document.getElementById('gate-setup-state');
+  if (cfg.clientId) {
+    if (connectState) connectState.style.display = 'block';
+    if (setupState) setupState.style.display = 'none';
+  } else {
+    if (connectState) connectState.style.display = 'none';
+    if (setupState) setupState.style.display = 'block';
+  }
+  var vEl = document.getElementById('gate-version');
+  var vTag = document.querySelector('[style*="letter-spacing:1.5px"]');
+  if (vEl && vTag) vEl.textContent = vTag.textContent;
+});
 
 </script>
 </body>
