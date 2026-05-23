@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.5</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.6</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3283,7 +3283,7 @@ function driveReconnectPrompt() {
 function initDriveTokenClient(clientId) {
   driveTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/drive',
     callback: function(resp) {
       if (resp.error) return;
       driveToken = resp.access_token;
@@ -3582,18 +3582,23 @@ function notesGetRootFolder() {
     headers: { Authorization: 'Bearer ' + driveToken }
   }).then(function(r) { return r.json(); })
   .then(function(result) {
+    if (result.error) { console.error('Drive search error:', result.error); throw new Error(result.error.message); }
     if (result.files && result.files.length > 0) {
       notesFolderRootId = result.files[0].id;
       notesSaveFolderCache();
       return notesFolderRootId;
     }
     // Create it
-    return fetch('https://www.googleapis.com/drive/v3/files', {
+    return fetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })
     }).then(function(r) { return r.json(); })
-    .then(function(f) { notesFolderRootId = f.id; notesSaveFolderCache(); return notesFolderRootId; });
+    .then(function(f) {
+      if (f.error) { console.error('Drive create folder error:', f.error); throw new Error(f.error.message); }
+      console.log('Created root notes folder:', f.id);
+      notesFolderRootId = f.id; notesSaveFolderCache(); return notesFolderRootId;
+    });
   });
 }
 
@@ -3707,6 +3712,13 @@ function notesSaveTemplate() {
 
 // Render notes view
 function renderרשומות() {
+  // Check if we have full drive scope (needed for notes)
+  if (driveToken && !settings.notesFolder) {
+    document.getElementById('notes-no-drive').style.display = 'none';
+    document.getElementById('notes-no-folder').style.display = 'block';
+    document.getElementById('notes-client-list').style.display = 'none';
+    return;
+  }
   if (!driveToken) {
     document.getElementById('notes-no-drive').style.display = 'block';
     document.getElementById('notes-no-folder').style.display = 'none';
