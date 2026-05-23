@@ -935,7 +935,7 @@
 
   /* Drive not connected overlay */
   .drive-gate {
-    position: fixed; inset: 0; z-index: 500;
+    position: fixed; inset: 0; z-index: 9999;
     background: var(--bg);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -2855,6 +2855,7 @@ function showToast(msg, type='success') {
 
 // ===== INIT =====
 loadSettings();
+showDriveGate(); // Ensure gate shows after settings load
 // Check Drive config directly from localStorage (getDriveConfig not yet defined)
 var _driveCfgRaw = (function() {
   try { return JSON.parse(localStorage.getItem('serene_drive')) || {}; } catch(e) { return {}; }
@@ -2864,8 +2865,8 @@ var driveMode = !!(_driveCfgRaw && _driveCfgRaw.clientId);
 // Always show gate — Drive is required
 try { localStorage.removeItem('serene_practice_data'); } catch(e) {}
 store.clients = []; store.appointments = []; store.payments = []; store.nextId = 1;
-renderDashboard();
 showDriveGate();
+renderDashboard();
 
 // ===== MOBILE NAV =====
 function setMobileNav(name) {
