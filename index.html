@@ -189,7 +189,7 @@
     border-radius: var(--radius);
     padding: 20px;
     position: relative;
-    overflow: hidden;
+   const notes = [];
   }
   .stat-card::before {
     content: '';
@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.1.7</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.0</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1222,24 +1222,26 @@
 
     <!-- NOTES -->
     <div class="view" id="view-notes">
-      <div class="notes-layout">
-        <div class="notes-sidebar">
-          <div style="padding: 12px 14px; border-bottom: 1px solid var(--border);">
-            <div class="search-bar" style="min-width: auto;">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="חיפוש רשומות…" oninput="filterרשומות(this.value)">
-            </div>
+      <div id="notes-no-drive" class="empty-state" style="display:none;">
+        <div class="empty-icon">☁️</div>
+        <div class="empty-title">נדרש חיבור ל-Drive</div>
+        <div class="empty-text">יש להתחבר ל-Google Drive ולהגדיר תיקיית רשומות בהגדרות</div>
+        <button class="btn btn-primary mt-2" onclick="showView('settings',null)" style="margin:16px auto 0;display:inline-flex;">פתח הגדרות</button>
+      </div>
+      <div id="notes-no-folder" class="empty-state" style="display:none;">
+        <div class="empty-icon">📁</div>
+        <div class="empty-title">תיקיית רשומות לא מוגדרת</div>
+        <div class="empty-text">יש להגדיר שם תיקיית רשומות בהגדרות → רשומות</div>
+        <button class="btn btn-primary mt-2" onclick="showView('settings',null)" style="margin:16px auto 0;display:inline-flex;">פתח הגדרות</button>
+      </div>
+      <div id="notes-client-list">
+        <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div class="search-bar" style="flex:1;min-width:180px;">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="notes-client-search" placeholder="חיפוש מטופל…" oninput="renderרשומות()">
           </div>
-          <div id="notesList"></div>
         </div>
-        <div class="notes-main" id="notesEditor">
-          <div class="empty-state">
-            <div class="empty-icon">📝</div>
-            <div class="empty-title">לא נבחרה רשומה</div>
-            <div class="empty-text">Select a טיפול note or create a new one</div>
-            <button class="btn btn-primary mt-2" onclick="openModal('addNote')" style="margin: 16px auto 0; display:inline-flex;">רשומה חדשה</button>
-          </div>
-        </div>
+        <div id="notes-clients-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
       </div>
     </div>
 
@@ -1543,6 +1545,30 @@
             </div>
           </div>
         </div>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.8"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.8"/></svg>
+              רשומות ב-Google Drive
+            </div>
+          </div>
+          <div style="padding:20px;">
+            <div class="form-group">
+              <label>שם תיקיית הרשומות ב-Drive</label>
+              <input class="form-control" id="s-notes-folder" placeholder="למשל: Serene Notes">
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תיקייה זו תיווצר ב-Drive שלך. בתוכה ייווצר תיקייה לכל מטופל.</div>
+            </div>
+            <div class="form-group">
+              <label>תבנית רשומה (אופציונלי)</label>
+              <textarea class="form-control" id="s-notes-template" rows="6" placeholder="תוכן ברירת מחדל לכל רשומה חדשה...&#10;&#10;למשל:&#10;תאריך: &#10;מצב רוח: &#10;נושאים שעלו: &#10;&#10;תוכן הפגישה:&#10;&#10;צעדים הבאים:"></textarea>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תבנית זו תשמש כתוכן ברירת מחדל בכל רשומה חדשה שתיווצר.</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="notesSaveTemplate()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              שמור תבנית ב-Drive
+            </button>
+          </div>
+        </div>
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div style="display:flex;gap:8px;">
             <button class="btn btn-ghost" onclick="exportSettings()">
@@ -1828,33 +1854,7 @@
     </div>
   </div>
 
-  <!-- ADD NOTE -->
-  <div class="modal" id="modal-addNote" style="display:none;">
-    <div class="modal-header">
-      <div class="modal-title">New Session Note</div>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label>מטופל</label>
-          <select class="form-control" id="n-client"></select>
-        </div>
-        <div class="form-group">
-          <label>תאריך טיפול</label>
-          <input class="form-control" id="n-date" type="date">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>תוכן הטיפול</label>
-        <textarea class="form-control" id="n-content" rows="6" placeholder="רשומת טיפול חופשית…"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
-      <button class="btn btn-primary" onclick="saveNote()">שמור רשומה</button>
-    </div>
-  </div>
+
 
   <!-- ADD PAYMENT -->
   <div class="modal" id="modal-addPayment" style="display:none;">
@@ -2108,7 +2108,8 @@ function showClientDetail(id) {
           מחק מטופל
         </button>
         <button class="btn btn-ghost btn-sm" onclick="openPaymentForClient(${id})">הוסף תשלום</button>
-        <button class="btn btn-primary btn-sm" onclick="openNoteForClient(${id})">הוסף רשומה</button>
+        <button class="btn btn-secondary btn-sm" onclick="notesShowCreateDialog(${id})">📝 רשומה חדשה</button>
+        <button class="btn btn-ghost btn-sm" onclick="notesOpenClientFolder(${id})" id="notes-folder-btn-${id}">📁 תיקיית רשומות</button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
@@ -2334,64 +2335,7 @@ function quickAddAppt(date, time) {
 }
 
 // ===== NOTES =====
-function renderרשומות(filter='') {
-  const notes = store.notes.filter(n => {
-    const c = getClient(n.clientId);
-    return !filter || (c && [c.firstName, c.lastName].filter(Boolean).join(" ").toLowerCase().includes(filter.toLowerCase()));
-  }).sort((a,b) => b.date.localeCompare(a.date));
-  const list = document.getElementById('notesList');
-  if (notes.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title" style="font-size:15px;">No notes</div></div>';
-    return;
-  }
-  list.innerHTML = notes.map(n => {
-    const c = getClient(n.clientId);
-    return `<div class="notes-list-item${n.id===activeNoteId?' active':''}" onclick="openNote(${n.id})">
-      <div class="notes-client">${c ? clientName(n.clientId) : '?'}</div>
-      <div class="notes-date">${fmtDate(n.date)}</div>
-      <div class="notes-preview">${n.content}</div>
-    </div>`;
-  }).join('');
-  if (activeNoteId) openNote(activeNoteId);
-}
 
-function filterרשומות(v) { renderרשומות(v); }
-
-function openNote(id) {
-  activeNoteId = id;
-  const n = store.notes.find(n => n.id === id);
-  if (!n) return;
-  const c = getClient(n.clientId);
-  document.querySelectorAll('.notes-list-item').forEach(el => {
-    el.classList.toggle('active', parseInt(el.getAttribute('onclick').match(/\d+/)[0]) === id);
-  });
-  document.getElementById('notesEditor').innerHTML = `
-    <div class="notes-editor-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="notes-editor-title">${c ? clientName(n.clientId) : 'Unknown'}</div>
-          <div class="notes-editor-meta">טיפול בתאריך ${fmtDate(n.date)}</div>
-        </div>
-        <button class="btn btn-danger btn-sm" onclick="deleteNote(${id})">מחק</button>
-      </div>
-    </div>
-    <div class="notes-editor-body">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px;">תוכן הטיפול</div>
-      <div style="font-size:14px;line-height:1.75;white-space:pre-wrap;color:var(--text);">${n.content}</div>
-
-    </div>
-  `;
-}
-
-function deleteNote(id) {
-  if (!confirm('Delete this טיפול note?')) return;
-  store.notes = store.notes.filter(n => n.id !== id);
-  activeNoteId = null;
-  document.getElementById('notesEditor').innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">לא נבחרה רשומה</div><div class="empty-text">Select a טיפול note or create a new one</div><button class="btn btn-primary mt-2" onclick="openModal('addNote')" style="margin: 16px auto 0; display:inline-flex;">רשומה חדשה</button></div>`;
-  renderרשומות();
-}
-
-// ===== PAYMENTS =====
 function renderתשלומים() {
   const labelFilter = document.getElementById('payLabelFilter') ? document.getElementById('payLabelFilter').value : '';
   const balanceFilter = document.getElementById('payBalanceFilter') ? document.getElementById('payBalanceFilter').value : 'all';
@@ -2551,8 +2495,6 @@ function openModal(name) {
     document.getElementById('a-type').value = 'טיפול פרטני';
     document.getElementById('a-status').value = 'confirmed';
     document.getElementById('a-notes').value = '';
-    document.getElementById('a-session-note').value = '';
-    document.getElementById('appt-note-indicator').textContent = '';
     const titleEl = document.getElementById('appt-modal-title');
     if (titleEl) titleEl.textContent = 'פגישה חדשה';
     const saveBtn = document.getElementById('appt-save-btn');
@@ -2664,38 +2606,6 @@ function saveAppointment() {
   renderView(currentView);
 }
 
-function saveNote() {
-  const n = {
-    id: store.nextId++,
-    clientId: parseInt(document.getElementById('n-client').value),
-    date: document.getElementById('n-date').value,
-    content: document.getElementById('n-content').value.trim(),
-    mood: '',
-    goals: ''
-  };
-  if (!n.content || !n.clientId) { alert('נא למלא שדות חובה'); return; }
-  store.notes.push(n);
-  activeNoteId = n.id;
-  closeModal();
-  renderView('notes');
-}
-
-function savePayment() {
-  const p = {
-    id: store.nextId++,
-    clientId: parseInt(document.getElementById('p-client').value),
-    date: document.getElementById('p-date').value,
-    amount: parseFloat(document.getElementById('p-amount').value) || 0,
-    description: document.getElementById('p-desc').value.trim()
-  };
-  if (!p.clientId || !p.amount) { alert('נא למלא מטופל וסכום'); return; }
-  store.payments.push(p);
-  saveToStorage();
-  closeModal();
-  renderתשלומים();
-  showToast('תשלום נרשם בהצלחה');
-}
-
 
 function handleSearch(v) { if (currentView === 'clients') filterClients(v); }
 
@@ -2713,6 +2623,8 @@ const defaultSettings = {
   email: '',
   address: '',
   website: '',
+  notesFolder: '',
+  notesTemplate: '',
   defaultFee: 350,
   currency: '₪',
   duration: 50,
@@ -2752,6 +2664,8 @@ function loadSettingsForm() {
   document.getElementById('s-email').value = settings.email || '';
   document.getElementById('s-address').value = settings.address || '';
   document.getElementById('s-website').value = settings.website || '';
+  document.getElementById('s-notes-folder').value = settings.notesFolder || '';
+  document.getElementById('s-notes-template').value = settings.notesTemplate || '';
   document.getElementById('s-defaultFee').value = settings.defaultFee || 350;
   document.getElementById('s-currency').value = settings.currency || '₪';
   document.getElementById('s-duration').value = settings.duration || 50;
@@ -2775,6 +2689,8 @@ function saveSettings() {
   settings.email = document.getElementById('s-email').value.trim();
   settings.address = document.getElementById('s-address').value.trim();
   settings.website = document.getElementById('s-website').value.trim();
+  settings.notesFolder = document.getElementById('s-notes-folder').value.trim();
+  settings.notesTemplate = document.getElementById('s-notes-template').value;
   settings.defaultFee = parseInt(document.getElementById('s-defaultFee').value) || 350;
   settings.currency = document.getElementById('s-currency').value;
   settings.duration = parseInt(document.getElementById('s-duration').value) || 50;
@@ -2802,7 +2718,6 @@ function saveToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       clients: store.clients,
       appointments: store.appointments,
-      notes: store.notes,
       payments: store.payments,
       nextId: store.nextId,
       savedAt: new Date().toISOString()
@@ -2817,7 +2732,6 @@ function loadFromStorage() {
     const data = JSON.parse(raw);
     store.clients = data.clients || [];
     store.appointments = data.appointments || [];
-    store.notes = data.notes || [];
     // Migrate old payments: keep only paid ones (status=paid), discard unpaid/pending
     store.payments = (data.payments || []).filter(function(p) {
       // Old system: keep only paid records; new system: all records are received payments
@@ -2902,8 +2816,7 @@ function importData() {
         if (!confirm(`ייבוא ${data.clients.length} מטופלים, ${data.appointments.length} פגישות, ${data.notes.length} רשומות ו-${data.payments.length} תשלומים?\n\nפעולה זו תחליף את הנתונים הנוכחיים.`)) return;
         store.clients = data.clients;
         store.appointments = data.appointments;
-        store.notes = data.notes || [];
-        store.payments = data.payments || [];
+            store.payments = data.payments || [];
         store.nextId = data.nextId || 1;
         saveToStorage();
         renderView(currentView);
@@ -2920,7 +2833,6 @@ function clearAllData() {
   if (!confirm('הזדמנות אחרונה — האם אתה בטוח שברצונך למחוק הכל?')) return;
   store.clients = [];
   store.appointments = [];
-  store.notes = [];
   store.payments = [];
   store.nextId = 1;
   saveToStorage();
@@ -2951,7 +2863,7 @@ var driveMode = !!(_driveCfgRaw && _driveCfgRaw.clientId);
 
 // Always show gate — Drive is required
 try { localStorage.removeItem('serene_practice_data'); } catch(e) {}
-store.clients = []; store.appointments = []; store.notes = []; store.payments = []; store.nextId = 1;
+store.clients = []; store.appointments = []; store.payments = []; store.nextId = 1;
 renderDashboard();
 showDriveGate();
 
@@ -3546,8 +3458,7 @@ function driveLoad(manual) {
       if (!data || !data.clients) { if (manual) showToast('קובץ Drive ריק'); return; }
       store.clients = data.clients || [];
       store.appointments = data.appointments || [];
-      store.notes = data.notes || [];
-      store.payments = (data.payments || []).filter(function(p) {
+        store.payments = (data.payments || []).filter(function(p) {
         return !p.status || p.status === 'paid';
       }).map(function(p) {
         return { id: p.id, clientId: p.clientId, date: p.date, amount: p.amount || 0, description: p.description || '' };
@@ -3645,6 +3556,294 @@ function driveClearClientId() {
   showToast('Client ID נמחק — ניתן להזין ID חדש');
   // Refresh the gate so it shows setup state
   showDriveGate();
+}
+
+// ===== DRIVE NOTES SYSTEM =====
+var notesFolderRootId = null;  // ID of main notes folder in Drive
+var notesClientFolders = {};   // clientId -> folderId cache
+
+function notesGetRootFolderName() {
+  return (settings.notesFolder || '').trim();
+}
+
+// Find or create the root notes folder
+function notesGetRootFolder() {
+  if (!driveToken) return Promise.reject('Not connected to Drive');
+  var folderName = notesGetRootFolderName();
+  if (!folderName) return Promise.reject('No folder name set');
+  if (notesFolderRootId) return Promise.resolve(notesFolderRootId);
+
+  var q = encodeURIComponent("name='" + folderName + "' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
+    headers: { Authorization: 'Bearer ' + driveToken }
+  }).then(function(r) { return r.json(); })
+  .then(function(result) {
+    if (result.files && result.files.length > 0) {
+      notesFolderRootId = result.files[0].id;
+      return notesFolderRootId;
+    }
+    // Create it
+    return fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })
+    }).then(function(r) { return r.json(); })
+    .then(function(f) { notesFolderRootId = f.id; return notesFolderRootId; });
+  });
+}
+
+// Find or create client subfolder
+function notesGetClientFolder(clientId) {
+  if (notesClientFolders[clientId]) return Promise.resolve(notesClientFolders[clientId]);
+  var c = getClient(clientId);
+  if (!c) return Promise.reject('Client not found');
+  var folderName = [c.firstName, c.lastName].filter(Boolean).join(' ');
+
+  return notesGetRootFolder().then(function(rootId) {
+    var q = encodeURIComponent("name='" + folderName + "' and '" + rootId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.files && result.files.length > 0) {
+        notesClientFolders[clientId] = result.files[0].id;
+        return notesClientFolders[clientId];
+      }
+      return fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: [rootId] })
+      }).then(function(r) { return r.json(); })
+      .then(function(f) { notesClientFolders[clientId] = f.id; return f.id; });
+    });
+  });
+}
+
+// List files in client folder
+function notesListClientFiles(clientId) {
+  return notesGetClientFolder(clientId).then(function(folderId) {
+    var q = encodeURIComponent("'" + folderId + "' in parents and trashed=false");
+    return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name,mimeType,webViewLink,modifiedTime)&orderBy=name desc', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.json(); })
+    .then(function(result) { return result.files || []; });
+  });
+}
+
+// Create a new note file (Google Doc or Word)
+function notesCreateFile(clientId, fileType, fileName) {
+  var template = settings.notesTemplate || '';
+  var today = todayStr();
+  var finalName = fileName || (today + ' - רשומה');
+
+  return notesGetClientFolder(clientId).then(function(folderId) {
+    if (fileType === 'gdoc') {
+      // Create Google Doc
+      return fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: finalName,
+          mimeType: 'application/vnd.google-apps.document',
+          parents: [folderId]
+        })
+      }).then(function(r) { return r.json(); })
+      .then(function(file) {
+        // If template exists, insert content
+        if (template) {
+          return fetch('https://docs.googleapis.com/v1/documents/' + file.id + ':batchUpdate', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requests: [{ insertText: { location: { index: 1 }, text: template } }]
+            })
+          }).then(function() { return file; });
+        }
+        return file;
+      });
+    } else {
+      // Create Word (.docx) via upload
+      var docContent = template ||
+        '<!DOCTYPE html><html><body><p></p></body></html>';
+      var blob = new Blob([docContent], { type: 'text/html' });
+      var form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify({
+        name: finalName + '.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        parents: [folderId]
+      })], { type: 'application/json' }));
+      form.append('file', blob);
+      return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + driveToken },
+        body: form
+      }).then(function(r) { return r.json(); });
+    }
+  });
+}
+
+// Save template to Drive
+function notesSaveTemplate() {
+  var template = document.getElementById('s-notes-template').value;
+  settings.notesTemplate = template;
+  saveSettings();
+  showToast('התבנית נשמרה');
+}
+
+// Render notes view
+function renderרשומות() {
+  if (!driveToken) {
+    document.getElementById('notes-no-drive').style.display = 'block';
+    document.getElementById('notes-no-folder').style.display = 'none';
+    document.getElementById('notes-client-list').style.display = 'none';
+    return;
+  }
+  if (!notesGetRootFolderName()) {
+    document.getElementById('notes-no-drive').style.display = 'none';
+    document.getElementById('notes-no-folder').style.display = 'block';
+    document.getElementById('notes-client-list').style.display = 'none';
+    return;
+  }
+  document.getElementById('notes-no-drive').style.display = 'none';
+  document.getElementById('notes-no-folder').style.display = 'none';
+  document.getElementById('notes-client-list').style.display = 'block';
+
+  var search = (document.getElementById('notes-client-search') ? document.getElementById('notes-client-search').value : '').toLowerCase();
+  var clients = store.clients.filter(function(c) {
+    return !c.archived && [c.firstName, c.lastName].filter(Boolean).join(' ').toLowerCase().includes(search);
+  });
+
+  var grid = document.getElementById('notes-clients-grid');
+  if (!grid) return;
+
+  grid.innerHTML = clients.map(function(c) {
+    var folderId = notesClientFolders[c.id];
+    var folderLink = folderId
+      ? 'https://drive.google.com/drive/folders/' + folderId
+      : '#';
+    var folderBtn = folderId
+      ? '<a href="' + folderLink + '" target="_blank" class="btn btn-ghost btn-sm">📁 פתח תיקייה</a>'
+      : '<button class="btn btn-ghost btn-sm" onclick="notesOpenClientFolder(' + c.id + ', this)">📁 פתח תיקייה</button>';
+
+    return '<div class="card" style="padding:16px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+        '<div class="client-avatar ' + colorClass(c) + '" style="width:36px;height:36px;font-size:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;">' + initials(c) + '</div>' +
+        '<div>' +
+          '<div style="font-weight:500;font-size:14px;">' + clientName(c.id) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);">לחץ כדי לפתוח רשומות ב-Drive</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        folderBtn +
+        '<button class="btn btn-secondary btn-sm" onclick="notesShowCreateDialog(' + c.id + ')">+ רשומה חדשה</button>' +
+      '</div>' +
+      '<div id="notes-files-' + c.id + '" style="margin-top:10px;"></div>' +
+    '</div>';
+  }).join('');
+
+  // Load file lists for visible clients
+  clients.forEach(function(c) {
+    notesLoadClientFiles(c.id);
+  });
+}
+
+function notesOpenClientFolder(clientId, btn) {
+  if (btn) btn.textContent = '⏳ טוען...';
+  notesGetClientFolder(clientId).then(function(folderId) {
+    window.open('https://drive.google.com/drive/folders/' + folderId, '_blank');
+    renderרשומות();
+  }).catch(function(e) {
+    showToast('שגיאה: ' + e, 'error');
+    if (btn) btn.textContent = '📁 פתח תיקייה';
+  });
+}
+
+function notesLoadClientFiles(clientId) {
+  var el = document.getElementById('notes-files-' + clientId);
+  if (!el) return;
+  notesListClientFiles(clientId).then(function(files) {
+    if (files.length === 0) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">אין רשומות עדיין</div>';
+      return;
+    }
+    el.innerHTML = '<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">' +
+      files.slice(0, 5).map(function(f) {
+        var icon = f.mimeType === 'application/vnd.google-apps.document' ? '📄' : '📝';
+        var date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('he-IL') : '';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">' +
+          '<span style="font-size:14px;">' + icon + '</span>' +
+          '<a href="' + f.webViewLink + '" target="_blank" style="flex:1;font-size:12.5px;color:var(--text);text-decoration:none;">' + f.name + '</a>' +
+          '<span style="font-size:11px;color:var(--text-muted);">' + date + '</span>' +
+        '</div>';
+      }).join('') +
+      (files.length > 5 ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;text-align:center;">+' + (files.length-5) + ' קבצים נוספים</div>' : '') +
+    '</div>';
+    notesClientFolders[clientId] = notesClientFolders[clientId]; // keep cache
+  }).catch(function() {
+    el.innerHTML = '';
+  });
+}
+
+// Create note dialog
+function notesShowCreateDialog(clientId) {
+  var c = getClient(clientId);
+  if (!c) return;
+  var today = todayStr();
+  var defaultName = today + ' - ' + clientName(clientId);
+
+  var html = '<div style="position:fixed;inset:0;background:rgba(42,36,32,0.45);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);" id="notes-create-overlay" onclick="if(event.target===this)this.remove();">' +
+    '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:400px;max-width:95vw;padding:24px;">' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:400;margin-bottom:16px;">רשומה חדשה — ' + c.firstName + '</div>' +
+      '<div class="form-group">' +
+        '<label>שם הקובץ</label>' +
+        '<input class="form-control" id="note-create-name" value="' + defaultName + '">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>סוג קובץ</label>' +
+        '<div style="display:flex;gap:10px;margin-top:6px;">' +
+          '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;"><input type="radio" name="note-type" value="gdoc" checked> 📄 Google Doc</label>' +
+          '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;"><input type="radio" name="note-type" value="docx"> 📝 Word (.docx)</label>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">' +
+        '<button class="btn btn-ghost" onclick="document.getElementById(\u0027notes-create-overlay\u0027).remove()">ביטול</button>' +
+        '<button class="btn btn-primary" onclick="notesDoCreate(' + clientId + ')">צור ופתח</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(function() { var el = document.getElementById('note-create-name'); if(el) el.select(); }, 50);
+}
+
+function notesDoCreate(clientId) {
+  var nameEl = document.getElementById('note-create-name');
+  var typeEl = document.querySelector('input[name="note-type"]:checked');
+  if (!nameEl || !typeEl) return;
+  var fileName = nameEl.value.trim() || todayStr();
+  var fileType = typeEl.value;
+  var overlay = document.getElementById('notes-create-overlay');
+  if (overlay) overlay.remove();
+
+  showToast('יוצר קובץ...');
+  notesCreateFile(clientId, fileType, fileName).then(function(file) {
+    showToast('הקובץ נוצר!');
+    if (file.webViewLink) window.open(file.webViewLink, '_blank');
+    // Clear folder cache to refresh file list
+    delete notesClientFolders[clientId];
+    notesGetClientFolder(clientId).then(function() {
+      notesLoadClientFiles(clientId);
+    });
+  }).catch(function(e) {
+    showToast('שגיאה ביצירת הקובץ: ' + e, 'error');
+    console.error('Notes create error:', e);
+  });
+}
+
+// Also show notes link in client detail
+function notesGetClientFolderLink(clientId) {
+  var folderId = notesClientFolders[clientId];
+  if (folderId) return 'https://drive.google.com/drive/folders/' + folderId;
+  return null;
 }
 
 </script>
