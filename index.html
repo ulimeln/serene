@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.9</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.10</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1563,6 +1563,9 @@
               <textarea class="form-control" id="s-notes-template" rows="6" placeholder="תוכן ברירת מחדל לכל רשומה חדשה...&#10;&#10;למשל:&#10;תאריך: &#10;מצב רוח: &#10;נושאים שעלו: &#10;&#10;תוכן הפגישה:&#10;&#10;צעדים הבאים:"></textarea>
               <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תבנית זו תשמש כתוכן ברירת מחדל בכל רשומה חדשה שתיווצר.</div>
             </div>
+            <button class="btn btn-ghost btn-sm" onclick="notesClearCache()" style="margin-left:8px;" title="נקה מטמון תיקיות אם שינית שמות או מבנה תיקיות ב-Drive">
+              🗑 נקה מטמון תיקיות
+            </button>
             <button class="btn btn-secondary btn-sm" onclick="notesSaveTemplate()">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               שמור תבנית ב-Drive
@@ -3754,6 +3757,13 @@ function notesCreateFile(clientId, fileType, fileName) {
 }
 
 // Save template to Drive
+function notesClearCache() {
+  notesFolderRootId = null;
+  notesClientFolders = {};
+  try { localStorage.removeItem(NOTES_CACHE_KEY); } catch(e) {}
+  showToast('מטמון התיקיות נוקה');
+}
+
 function notesSaveTemplate() {
   var template = document.getElementById('s-notes-template').value;
   settings.notesTemplate = template;
