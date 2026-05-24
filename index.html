@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.8</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.9</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3604,8 +3604,10 @@ function notesGetRootFolderName() {
 
 // Find or create a folder by name inside a parent folder
 function notesFindOrCreateFolder(name, parentId) {
-  var q = encodeURIComponent("name='" + name + "' and '" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
-  return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
+  // Escape single quotes in name for Drive API query
+  var safeName = name.replace(/'/g, "\'");
+  var q = "name='" + safeName + "' and '" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
+  return fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)', {
     headers: { Authorization: 'Bearer ' + driveToken }
   }).then(function(r) { return r.json(); })
   .then(function(result) {
@@ -3631,8 +3633,8 @@ function notesGetRootFolder() {
   if (!folderPath) return Promise.reject('No folder name set');
   if (notesFolderRootId) return Promise.resolve(notesFolderRootId);
 
-  // Split path into parts (support both / and \)
-  var parts = folderPath.split(/[\/]/).map(function(p) { return p.trim(); }).filter(Boolean);
+  // Split path on / or \ separators
+  var parts = folderPath.split(/[/\\]/).map(function(p) { return p.trim(); }).filter(Boolean);
 
   // Navigate/create each part starting from root
   var promise = Promise.resolve('root');
@@ -3659,7 +3661,9 @@ function notesGetClientFolder(clientId) {
   var folderName = [c.firstName, c.lastName].filter(Boolean).join(' ');
 
   notesFolderCreating[clientId] = notesGetRootFolder().then(function(rootId) {
-    var q = encodeURIComponent("name='" + folderName + "' and '" + rootId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    var safeFolderName = folderName.replace(/'/g, "\'");
+    var q = "name='" + safeFolderName + "' and '" + rootId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    var q = encodeURIComponent(q);
     return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
       headers: { Authorization: 'Bearer ' + driveToken }
     }).then(function(r) { return r.json(); })
