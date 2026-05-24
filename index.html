@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.7</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.8</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1555,8 +1555,8 @@
           <div style="padding:20px;">
             <div class="form-group">
               <label>שם תיקיית הרשומות ב-Drive</label>
-              <input class="form-control" id="s-notes-folder" placeholder="למשל: Serene Notes">
-              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תיקייה זו תיווצר ב-Drive שלך. בתוכה ייווצר תיקייה לכל מטופל.</div>
+              <input class="form-control" id="s-notes-folder" placeholder="למשל: Serene Notes או Therapy/Serene Notes">
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תיקייה זו תיווצר ב-Drive שלך. ניתן להזין נתיב עם תיקיות אב, למשל: <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">Therapy/Serene Notes</code></div>
             </div>
             <div class="form-group">
               <label>תבנית רשומה (אופציונלי)</label>
@@ -2695,7 +2695,13 @@ function saveSettings() {
   settings.email = document.getElementById('s-email').value.trim();
   settings.address = document.getElementById('s-address').value.trim();
   settings.website = document.getElementById('s-website').value.trim();
-  settings.notesFolder = document.getElementById('s-notes-folder').value.trim();
+  var newNotesFolder = document.getElementById('s-notes-folder').value.trim();
+  if (newNotesFolder !== settings.notesFolder) {
+    // Path changed — clear folder cache
+    notesFolderRootId = null; notesClientFolders = {};
+    try { localStorage.removeItem(NOTES_CACHE_KEY); } catch(e) {}
+  }
+  settings.notesFolder = newNotesFolder;
   settings.notesTemplate = document.getElementById('s-notes-template').value;
   settings.defaultFee = parseInt(document.getElementById('s-defaultFee').value) || 350;
   settings.currency = document.getElementById('s-currency').value;
@@ -3596,35 +3602,50 @@ function notesGetRootFolderName() {
   return (settings.notesFolder || '').trim();
 }
 
-// Find or create the root notes folder
-function notesGetRootFolder() {
-  if (!driveToken) return Promise.reject('Not connected to Drive');
-  var folderName = notesGetRootFolderName();
-  if (!folderName) return Promise.reject('No folder name set');
-  if (notesFolderRootId) return Promise.resolve(notesFolderRootId);
-
-  var q = encodeURIComponent("name='" + folderName + "' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+// Find or create a folder by name inside a parent folder
+function notesFindOrCreateFolder(name, parentId) {
+  var q = encodeURIComponent("name='" + name + "' and '" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false");
   return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
     headers: { Authorization: 'Bearer ' + driveToken }
   }).then(function(r) { return r.json(); })
   .then(function(result) {
-    if (result.error) { console.error('Drive search error:', result.error); throw new Error(result.error.message); }
-    if (result.files && result.files.length > 0) {
-      notesFolderRootId = result.files[0].id;
-      notesSaveFolderCache();
-      return notesFolderRootId;
-    }
-    // Create it
+    if (result.error) throw new Error(result.error.message);
+    if (result.files && result.files.length > 0) return result.files[0].id;
+    // Create folder
     return fetch('https://www.googleapis.com/drive/v3/files?fields=id,name', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })
+      body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
     }).then(function(r) { return r.json(); })
     .then(function(f) {
-      if (f.error) { console.error('Drive create folder error:', f.error); throw new Error(f.error.message); }
-      console.log('Created root notes folder:', f.id);
-      notesFolderRootId = f.id; notesSaveFolderCache(); return notesFolderRootId;
+      if (f.error) throw new Error(f.error.message);
+      return f.id;
     });
+  });
+}
+
+// Find or create the root notes folder (supports subfolder path like "Therapy/Serene Notes")
+function notesGetRootFolder() {
+  if (!driveToken) return Promise.reject('Not connected to Drive');
+  var folderPath = notesGetRootFolderName();
+  if (!folderPath) return Promise.reject('No folder name set');
+  if (notesFolderRootId) return Promise.resolve(notesFolderRootId);
+
+  // Split path into parts (support both / and \)
+  var parts = folderPath.split(/[\/]/).map(function(p) { return p.trim(); }).filter(Boolean);
+
+  // Navigate/create each part starting from root
+  var promise = Promise.resolve('root');
+  parts.forEach(function(part) {
+    promise = promise.then(function(parentId) {
+      return notesFindOrCreateFolder(part, parentId);
+    });
+  });
+
+  return promise.then(function(folderId) {
+    notesFolderRootId = folderId;
+    notesSaveFolderCache();
+    return notesFolderRootId;
   });
 }
 
@@ -3983,6 +4004,41 @@ function apptCreateNoteInDrive() {
     if (createBtn) createBtn.textContent = '+ צור רשומת טיפול';
   });
 }
+
+// ===== ANDROID BACK BUTTON HANDLER =====
+// Push a history state so back button doesn't close the app
+window.addEventListener('load', function() {
+  history.pushState({ app: true }, '');
+});
+
+window.addEventListener('popstate', function(e) {
+  // If a modal is open, close it instead
+  var modal = document.getElementById('modalOverlay');
+  if (modal && modal.style.display !== 'none') {
+    closeModal();
+    history.pushState({ app: true }, '');
+    return;
+  }
+  // If client detail is open, go back to clients list
+  var clientDetail = document.getElementById('client-detail-view');
+  if (clientDetail && clientDetail.style.display !== 'none') {
+    closeClientDetail();
+    history.pushState({ app: true }, '');
+    return;
+  }
+  // If not on dashboard, go to dashboard
+  if (currentView !== 'dashboard') {
+    showView('dashboard', null);
+    history.pushState({ app: true }, '');
+    return;
+  }
+  // On dashboard — ask before closing
+  if (confirm('לצאת מהאפליקציה?')) {
+    history.back();
+  } else {
+    history.pushState({ app: true }, '');
+  }
+});
 
 </script>
 </body>
