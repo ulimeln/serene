@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.11</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.12</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2148,12 +2148,13 @@ function showClientDetail(id) {
       </table></div></div>
     </div>
     <div id="cd-notes-${id}" style="display:none;">
-      ${notes.length===0?'<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">אין רשומות עדיין</div></div>':
-      notes.sort((a,b)=>b.date.localeCompare(a.date)).map(n=>`
-      <div class="card" style="margin-bottom:14px;"><div class="card-header"><div class="card-title">${fmtDate(n.date)}</div></div>
-        <div style="padding:16px 20px;font-size:13.5px;line-height:1.7;color:var(--text);">${n.content}</div>
-
-      </div>`).join('')}
+      <div style="padding:4px 0 12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="notesShowCreateDialog(${id})">📝 רשומה חדשה</button>
+        <button class="btn btn-ghost btn-sm" onclick="notesOpenClientFolder(${id})">📁 פתח תיקייה ב-Drive</button>
+      </div>
+      <div id="cd-notes-files-${id}">
+        <div style="color:var(--text-muted);font-size:13px;">טוען רשומות...</div>
+      </div>
     </div>
     <div id="cd-payments-${id}" style="display:none;">
       <div class="card"><div style="overflow-x:auto;"><table><thead><tr><th>תאריך</th><th>סכום</th><th>הערה</th><th></th></tr></thead>
@@ -4077,6 +4078,36 @@ window.addEventListener('popstate', function(e) {
     history.pushState({ app: true }, '');
   }
 });
+
+function notesLoadClientDetailFiles(clientId) {
+  var el = document.getElementById('cd-notes-files-' + clientId);
+  if (!el) return;
+  if (!driveToken || !settings.notesFolder) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">☁️</div><div class="empty-title">יש להתחבר ל-Drive ולהגדיר תיקיית רשומות</div></div>';
+    return;
+  }
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">טוען...</div>';
+  notesListClientFiles(clientId).then(function(files) {
+    if (files.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">אין רשומות עדיין</div></div>';
+      return;
+    }
+    el.innerHTML = files.map(function(f) {
+      var icon = f.mimeType === 'application/vnd.google-apps.document' ? '📄' : '📝';
+      var date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('he-IL') : '';
+      var link = f.webViewLink || '#';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">' +
+        '<span style="font-size:18px;">' + icon + '</span>' +
+        '<div style="flex:1;">' +
+          '<a href="' + link + '" target="_blank" style="font-size:13.5px;font-weight:500;color:var(--text);text-decoration:none;">' + f.name + '</a>' +
+          '<div style="font-size:11px;color:var(--text-muted);">שונה: ' + date + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function(e) {
+    el.innerHTML = '<div style="color:var(--rose);font-size:13px;">שגיאה בטעינת רשומות: ' + e + '</div>';
+  });
+}
 
 </script>
 </body>
