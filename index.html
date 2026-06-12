@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.15</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.16</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2518,7 +2518,7 @@ function openModal(name) {
   }
 
   // Populate client dropdowns
-  const clientOptions = store.clients.map(c => `<option value="${c.id}">${[c.firstName, c.lastName].filter(Boolean).join(" ")}</option>`).join('');
+  const clientOptions = store.clients.filter(c => !c.archived).sort((a,b) => (a.firstName||'').localeCompare(b.firstName||'', 'he')).map(c => `<option value="${c.id}">${[c.firstName, c.lastName].filter(Boolean).join(" ")}</option>`).join('');
   if (name === 'addAppt') {
     document.getElementById('a-id').value = '';
     document.getElementById('a-client').innerHTML = clientOptions;
