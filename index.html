@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.12</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.13</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -2020,6 +2020,12 @@ function renderDashboard() {
 
 // ===== CLIENTS =====
 function renderClients(filter = '', showArchived = false) {
+  // Clear search bar if no filter passed
+  if (!filter) {
+    var sb = document.getElementById('clients-search-bar');
+    if (sb) sb.value = '';
+    window._activeLabelFilter = '';
+  }
   document.getElementById('client-detail-view').style.display = 'none';
   document.getElementById('clients-list-view').style.display = 'block';
 
