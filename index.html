@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.18</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.5.0</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1559,16 +1559,24 @@
               <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תיקייה זו תיווצר ב-Drive שלך. ניתן להזין נתיב עם תיקיות אב, למשל: <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">Therapy/Serene Notes</code></div>
             </div>
             <div class="form-group">
-              <label>תבנית רשומה (אופציונלי)</label>
-              <textarea class="form-control" id="s-notes-template" rows="6" placeholder="תוכן ברירת מחדל לכל רשומה חדשה...&#10;&#10;למשל:&#10;תאריך: &#10;מצב רוח: &#10;נושאים שעלו: &#10;&#10;תוכן הפגישה:&#10;&#10;צעדים הבאים:"></textarea>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">תבנית זו תשמש כתוכן ברירת מחדל בכל רשומה חדשה שתיווצר.</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label style="margin-bottom:0;">סוגי רשומות ותבניות</label>
+                <button class="btn btn-secondary btn-sm" onclick="templatesRefreshList()">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                  רענן
+                </button>
+              </div>
+              <div id="templates-list" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                <div style="padding:16px;color:var(--text-muted);font-size:13px;text-align:center;">יש להגדיר תיקיית רשומות ולהתחבר ל-Drive תחילה</div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <input class="form-control" id="new-template-name" placeholder="שם סוג רשומה חדש, למשל: מעקב טלפוני" style="flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="templatesCreateNew()" style="flex-shrink:0;">+ הוסף סוג</button>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">כל תבנית היא קובץ ב-Drive בתיקיית <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">_Templates</code>. ניתן לערוך אותן ישירות ב-Drive בכל עת.</div>
             </div>
             <button class="btn btn-ghost btn-sm" onclick="notesClearCache()" style="margin-left:8px;" title="נקה מטמון תיקיות אם שינית שמות או מבנה תיקיות ב-Drive">
               🗑 נקה מטמון תיקיות
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="notesSaveTemplate()">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              שמור תבנית ב-Drive
             </button>
           </div>
         </div>
@@ -2659,7 +2667,6 @@ const defaultSettings = {
   address: '',
   website: '',
   notesFolder: '',
-  notesTemplate: '',
   defaultFee: 350,
   currency: '₪',
   duration: 50,
@@ -2700,7 +2707,6 @@ function loadSettingsForm() {
   document.getElementById('s-address').value = settings.address || '';
   document.getElementById('s-website').value = settings.website || '';
   document.getElementById('s-notes-folder').value = settings.notesFolder || '';
-  document.getElementById('s-notes-template').value = settings.notesTemplate || '';
   document.getElementById('s-defaultFee').value = settings.defaultFee || 350;
   document.getElementById('s-currency').value = settings.currency || '₪';
   document.getElementById('s-duration').value = settings.duration || 50;
@@ -2731,7 +2737,6 @@ function saveSettings() {
     try { localStorage.removeItem(NOTES_CACHE_KEY); } catch(e) {}
   }
   settings.notesFolder = newNotesFolder;
-  settings.notesTemplate = document.getElementById('s-notes-template').value;
   settings.defaultFee = parseInt(document.getElementById('s-defaultFee').value) || 350;
   settings.currency = document.getElementById('s-currency').value;
   settings.duration = parseInt(document.getElementById('s-duration').value) || 50;
@@ -3548,6 +3553,7 @@ saveToStorage = function() {
 var _origLoadSettingsForm2 = loadSettingsForm;
 loadSettingsForm = function() {
   _origLoadSettingsForm2();
+  setTimeout(templatesRefreshList, 100);
   var cfg = getDriveConfig();
   var el = document.getElementById('s-drive-clientid');
   if (el && cfg.clientId) el.value = cfg.clientId;
@@ -3740,11 +3746,13 @@ function notesListClientFiles(clientId) {
 }
 
 // Create a new note file (Google Doc or Word)
-function notesCreateFile(clientId, fileType, fileName) {
-  var template = settings.notesTemplate || '';
+function notesCreateFile(clientId, fileType, fileName, templateType) {
   var today = todayStr();
   var finalName = fileName || (today + ' - רשומה');
 
+  var templatePromise = templateType ? templatesGetContent(templateType) : Promise.resolve('');
+
+  return templatePromise.then(function(template) {
   return notesGetClientFolder(clientId).then(function(folderId) {
     if (fileType === 'gdoc') {
       // Create Google Doc
@@ -3789,6 +3797,7 @@ function notesCreateFile(clientId, fileType, fileName) {
       }).then(function(r) { return r.json(); });
     }
   });
+  });
 }
 
 // Save template to Drive
@@ -3799,12 +3808,6 @@ function notesClearCache() {
   showToast('מטמון התיקיות נוקה');
 }
 
-function notesSaveTemplate() {
-  var template = document.getElementById('s-notes-template').value;
-  settings.notesTemplate = template;
-  saveSettings();
-  showToast('התבנית נשמרה');
-}
 
 // Render notes view
 function renderרשומות() {
@@ -3912,15 +3915,17 @@ function notesLoadClientFiles(clientId) {
 function notesShowCreateDialog(clientId) {
   var c = getClient(clientId);
   if (!c) return;
-  var today = todayStr();
-  var defaultName = today + ' - כללי';
 
   var html = '<div style="position:fixed;inset:0;background:rgba(42,36,32,0.45);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);" id="notes-create-overlay" onclick="if(event.target===this)this.remove();">' +
     '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:400px;max-width:95vw;padding:24px;">' +
       '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:400;margin-bottom:16px;">רשומה חדשה — ' + c.firstName + '</div>' +
       '<div class="form-group">' +
+        '<label>סוג רשומה</label>' +
+        '<select class="form-control" id="note-create-type" onchange="notesUpdateDialogName(' + clientId + ')"><option value="">טוען...</option></select>' +
+      '</div>' +
+      '<div class="form-group">' +
         '<label>שם הקובץ</label>' +
-        '<input class="form-control" id="note-create-name" value="' + defaultName + '">' +
+        '<input class="form-control" id="note-create-name" value="">' +
       '</div>' +
       '<div class="form-group">' +
         '<label>סוג קובץ</label>' +
@@ -3936,20 +3941,42 @@ function notesShowCreateDialog(clientId) {
     '</div>' +
   '</div>';
   document.body.insertAdjacentHTML('beforeend', html);
-  setTimeout(function() { var el = document.getElementById('note-create-name'); if(el) el.select(); }, 50);
+
+  templatesLoadForDropdown().then(function(types) {
+    var sel = document.getElementById('note-create-type');
+    if (!sel) return;
+    if (types.length === 0) {
+      sel.innerHTML = '<option value="">ללא תבנית (ריק)</option>';
+    } else {
+      sel.innerHTML = types.map(function(t) { return '<option value="' + t.typeName + '">' + t.typeName + '</option>'; }).join('');
+    }
+    notesUpdateDialogName(clientId);
+  });
+}
+
+function notesUpdateDialogName(clientId) {
+  var c = getClient(clientId);
+  var typeSel = document.getElementById('note-create-type');
+  var nameEl = document.getElementById('note-create-name');
+  if (!c || !typeSel || !nameEl) return;
+  var today = todayStr();
+  var typeName = typeSel.value || 'כללי';
+  nameEl.value = today + ' - ' + typeName + ' - ' + clientName(clientId);
 }
 
 function notesDoCreate(clientId) {
   var nameEl = document.getElementById('note-create-name');
   var typeEl = document.querySelector('input[name="note-type"]:checked');
+  var templateTypeSel = document.getElementById('note-create-type');
   if (!nameEl || !typeEl) return;
   var fileName = nameEl.value.trim() || todayStr();
   var fileType = typeEl.value;
+  var templateType = templateTypeSel ? templateTypeSel.value : '';
   var overlay = document.getElementById('notes-create-overlay');
   if (overlay) overlay.remove();
 
   showToast('יוצר קובץ...');
-  notesCreateFile(clientId, fileType, fileName).then(function(file) {
+  notesCreateFile(clientId, fileType, fileName, templateType).then(function(file) {
     showToast('הקובץ נוצר!');
     var link = file.webViewLink || ('https://docs.google.com/document/d/' + file.id + '/edit');
     window.open(link, '_blank');
@@ -4037,7 +4064,7 @@ function apptCreateNoteInDrive() {
   var fileName = date + ' - פגישה - ' + clientNameStr;
   var createBtn = document.getElementById('appt-note-create-btn');
   if (createBtn) createBtn.textContent = '⏳ יוצר...';
-  notesCreateFile(clientId, 'gdoc', fileName).then(function(file) {
+  notesCreateFile(clientId, 'gdoc', fileName, 'פגישה רגילה').then(function(file) {
     var link = file.webViewLink || ('https://docs.google.com/document/d/' + file.id + '/edit');
     window.open(link, '_blank');
     var openBtn = document.getElementById('appt-note-open-btn');
@@ -4131,6 +4158,159 @@ function addLabelFromButton(prefix) {
   }
   input.value = '';
   input.focus();
+}
+
+// ===== TEMPLATE TYPES SYSTEM =====
+var TEMPLATES_FOLDER_NAME = '_Templates';
+var templatesFolderId = null;
+var templatesCache = null;
+
+var DEFAULT_TEMPLATES = {
+  'פגישה ראשונה': 'תאריך: \nשם המטופל: \n\nרקע ופנייה:\n\nרשמים ראשוניים:\n\nתוכנית טיפולית ראשונית:\n',
+  'פגישה רגילה': 'תאריך: \n\nמצב רוח:\n\nנושאים שעלו:\n\nתוכן הפגישה:\n\nצעדים הבאים:\n',
+  'דוח': 'תאריך: \nעבור: \n\nסיכום מהלך הטיפול:\n\nהערכה:\n\nהמלצות:\n'
+};
+
+function templatesGetFolder() {
+  if (templatesFolderId) return Promise.resolve(templatesFolderId);
+  return notesGetRootFolder().then(function(rootId) {
+    return notesFindOrCreateFolder(TEMPLATES_FOLDER_NAME, rootId);
+  }).then(function(id) {
+    templatesFolderId = id;
+    return id;
+  });
+}
+
+function templatesEnsureDefaults(folderId) {
+  var q = encodeURIComponent("'" + folderId + "' in parents and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
+    headers: { Authorization: 'Bearer ' + driveToken }
+  }).then(function(r) { return r.json(); })
+  .then(function(result) {
+    var existing = (result.files || []).map(function(f) { return f.name.replace(/\.[^.]+$/, ''); });
+    var toCreate = Object.keys(DEFAULT_TEMPLATES).filter(function(name) { return existing.indexOf(name) === -1; });
+    if (toCreate.length === 0) return Promise.resolve();
+    var promises = toCreate.map(function(name) {
+      return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + driveToken },
+        body: (function() {
+          var form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify({ name: name + '.txt', parents: [folderId] })], { type: 'application/json' }));
+          form.append('file', new Blob([DEFAULT_TEMPLATES[name]], { type: 'text/plain' }));
+          return form;
+        })()
+      });
+    });
+    return Promise.all(promises);
+  });
+}
+
+function templatesRefreshList() {
+  var listEl = document.getElementById('templates-list');
+  if (!listEl) return;
+  if (!driveToken || !notesGetRootFolderName()) {
+    listEl.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;text-align:center;">יש להגדיר תיקיית רשומות ולהתחבר ל-Drive תחילה</div>';
+    return;
+  }
+  listEl.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;text-align:center;">טוען...</div>';
+
+  templatesGetFolder().then(function(folderId) {
+    return templatesEnsureDefaults(folderId).then(function() { return folderId; });
+  }).then(function(folderId) {
+    var q = encodeURIComponent("'" + folderId + "' in parents and trashed=false");
+    return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name,webViewLink)&orderBy=name', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.json(); });
+  }).then(function(result) {
+    var files = result.files || [];
+    templatesCache = files.map(function(f) {
+      return { id: f.id, name: f.name, typeName: f.name.replace(/\.[^.]+$/, ''), webViewLink: f.webViewLink };
+    });
+    if (templatesCache.length === 0) {
+      listEl.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;text-align:center;">אין תבניות עדיין</div>';
+      return;
+    }
+    listEl.innerHTML = templatesCache.map(function(t) {
+      var link = t.webViewLink || ('https://drive.google.com/file/d/' + t.id + '/view');
+      var safeTypeName = t.typeName.replace(/'/g, "&#39;");
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">' +
+        '<span style="font-size:13.5px;">' + t.typeName + '</span>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<a href="' + link + '" target="_blank" class="btn btn-ghost btn-sm" style="padding:3px 10px;font-size:12px;">✏️ ערוך</a>' +
+          '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:12px;color:var(--rose);" onclick="templatesDelete(\'' + t.id + '\',\'' + safeTypeName + '\')">מחק</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function(e) {
+    listEl.innerHTML = '<div style="padding:16px;color:var(--rose);font-size:13px;">שגיאה בטעינת תבניות: ' + e + '</div>';
+  });
+}
+
+function templatesCreateNew() {
+  var nameEl = document.getElementById('new-template-name');
+  var name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { showToast('נא להזין שם לסוג הרשומה', 'error'); return; }
+  if (!driveToken || !notesGetRootFolderName()) { showToast('יש להגדיר תיקיית רשומות תחילה', 'error'); return; }
+
+  templatesGetFolder().then(function(folderId) {
+    var form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify({ name: name + '.txt', parents: [folderId] })], { type: 'application/json' }));
+    form.append('file', new Blob([''], { type: 'text/plain' }));
+    return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + driveToken },
+      body: form
+    });
+  }).then(function(r) { return r.json(); })
+  .then(function(file) {
+    if (nameEl) nameEl.value = '';
+    showToast('סוג הרשומה נוצר! ניתן לערוך את התבנית ב-Drive');
+    templatesRefreshList();
+  }).catch(function(e) {
+    showToast('שגיאה: ' + e, 'error');
+  });
+}
+
+function templatesDelete(fileId, typeName) {
+  if (!confirm('למחוק את סוג הרשומה "' + typeName + '"?')) return;
+  fetch('https://www.googleapis.com/drive/v3/files/' + fileId, {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + driveToken }
+  }).then(function() {
+    showToast('סוג הרשומה נמחק');
+    templatesRefreshList();
+  }).catch(function(e) {
+    showToast('שגיאה במחיקה: ' + e, 'error');
+  });
+}
+
+function templatesGetContent(typeName) {
+  if (!templatesCache) return Promise.resolve('');
+  var t = templatesCache.find(function(x) { return x.typeName === typeName; });
+  if (!t) return Promise.resolve('');
+  return fetch('https://www.googleapis.com/drive/v3/files/' + t.id + '?alt=media', {
+    headers: { Authorization: 'Bearer ' + driveToken }
+  }).then(function(r) { return r.ok ? r.text() : ''; }).catch(function() { return ''; });
+}
+
+function templatesLoadForDropdown() {
+  if (!driveToken || !notesGetRootFolderName()) return Promise.resolve([]);
+  if (templatesCache) return Promise.resolve(templatesCache);
+  return templatesGetFolder().then(function(folderId) {
+    return templatesEnsureDefaults(folderId).then(function() { return folderId; });
+  }).then(function(folderId) {
+    var q = encodeURIComponent("'" + folderId + "' in parents and trashed=false");
+    return fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name,webViewLink)&orderBy=name', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    }).then(function(r) { return r.json(); });
+  }).then(function(result) {
+    var files = result.files || [];
+    templatesCache = files.map(function(f) {
+      return { id: f.id, name: f.name, typeName: f.name.replace(/\.[^.]+$/, ''), webViewLink: f.webViewLink };
+    });
+    return templatesCache;
+  }).catch(function() { return []; });
 }
 
 </script>
