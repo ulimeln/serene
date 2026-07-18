@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.5.1</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.5.2</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -3766,15 +3766,30 @@ function notesCreateFile(clientId, fileType, fileName, templateType) {
         })
       }).then(function(r) { return r.json(); })
       .then(function(file) {
-        // If template exists, insert content
+        console.log('Created Google Doc:', file.id, 'Template length:', template ? template.length : 0);
+        if (file.error) { console.error('Doc creation error:', file.error); return file; }
         if (template) {
-          return fetch('https://docs.googleapis.com/v1/documents/' + file.id + ':batchUpdate', {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              requests: [{ insertText: { location: { index: 1 }, text: template } }]
-            })
-          }).then(function() { return file; });
+          // Small delay to let the new doc propagate before Docs API can edit it
+          return new Promise(function(resolve) { setTimeout(resolve, 800); }).then(function() {
+            return fetch('https://docs.googleapis.com/v1/documents/' + file.id + ':batchUpdate', {
+              method: 'POST',
+              headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                requests: [{ insertText: { location: { index: 1 }, text: template } }]
+              })
+            });
+          }).then(function(r) { return r.json(); })
+          .then(function(result) {
+            if (result.error) {
+              console.error('Docs batchUpdate error:', result.error);
+            } else {
+              console.log('Template inserted successfully');
+            }
+            return file;
+          }).catch(function(e) {
+            console.error('Docs batchUpdate fetch failed:', e);
+            return file;
+          });
         }
         return file;
       });
