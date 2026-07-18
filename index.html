@@ -1038,7 +1038,7 @@
   <div class="logo">
     <div class="logo-name">Serene</div>
     <div class="logo-sub">ניהול מרפאה</div>
-    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.17</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:1.5px;margin-top:4px;">v2.2.18</div>
   </div>
   <nav class="nav">
     <div class="nav-label">סביבת עבודה</div>
@@ -1665,7 +1665,8 @@
         <div style="position:relative;">
         <div class="label-input-wrap" id="f-labels-wrap" onclick="document.getElementById('f-label-input').focus()">
           <div id="f-labels-container" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-          <input type="text" id="f-label-input" placeholder="הוסף תווית ולחץ Enter…" onkeydown="handleLabelInput(event,'f')" oninput="showLabelSuggestions(this,'f')" onblur="hideLabelSuggestions('f')" autocomplete="off">
+          <input type="text" id="f-label-input" placeholder="הוסף תווית…" onkeydown="handleLabelInput(event,'f')" oninput="showLabelSuggestions(this,'f')" onblur="hideLabelSuggestions('f')" autocomplete="off">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="event.stopPropagation();addLabelFromButton('f')" style="flex-shrink:0;padding:4px 10px;">+ הוסף</button>
         </div>
         <div id="f-label-suggestions" class="label-suggestions" style="display:none;"></div>
         </div>
@@ -1760,7 +1761,8 @@
         <div style="position:relative;">
         <div class="label-input-wrap" id="ef-labels-wrap" onclick="document.getElementById('ef-label-input').focus()">
           <div id="ef-labels-container" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-          <input type="text" id="ef-label-input" placeholder="הוסף תווית ולחץ Enter…" onkeydown="handleLabelInput(event,'ef')" oninput="showLabelSuggestions(this,'ef')" onblur="hideLabelSuggestions('ef')" autocomplete="off">
+          <input type="text" id="ef-label-input" placeholder="הוסף תווית…" onkeydown="handleLabelInput(event,'ef')" oninput="showLabelSuggestions(this,'ef')" onblur="hideLabelSuggestions('ef')" autocomplete="off">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="event.stopPropagation();addLabelFromButton('ef')" style="flex-shrink:0;padding:4px 10px;">+ הוסף</button>
         </div>
         <div id="ef-label-suggestions" class="label-suggestions" style="display:none;"></div>
         </div>
@@ -4113,6 +4115,22 @@ function notesLoadClientDetailFiles(clientId) {
   }).catch(function(e) {
     el.innerHTML = '<div style="color:var(--rose);font-size:13px;">שגיאה בטעינת רשומות: ' + e + '</div>';
   });
+}
+
+function addLabelFromButton(prefix) {
+  var input = document.getElementById(prefix + '-label-input');
+  if (!input) return;
+  var val = input.value.trim().replace(/,/g, '');
+  if (!val) return;
+  var dataEl = document.getElementById(prefix + '-labels-data');
+  var labels = JSON.parse(dataEl.value || '[]');
+  if (!labels.includes(val)) {
+    labels.push(val);
+    dataEl.value = JSON.stringify(labels);
+    renderLabelTags(prefix, labels);
+  }
+  input.value = '';
+  input.focus();
 }
 
 </script>
